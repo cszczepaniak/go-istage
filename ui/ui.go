@@ -60,10 +60,13 @@ func (v view) Init() tea.Cmd {
 func (v view) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
-		v.h = msg.Height
+		// I'm not really sure why, but it seems like to make bubbletea render properly, we need to subtract 1 from the
+		// height when setting the window.
+
+		v.h = msg.Height - 1
 		v.w = msg.Width
 
-		v.window.Resize(msg.Height)
+		v.window.Resize(msg.Height - 1)
 	case tea.KeyMsg:
 		switch msg.String() {
 		case "ctrl+c", "q":
