@@ -111,6 +111,7 @@ func (v view) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case docMsg:
 		v.doc = msg.d
 	case error:
+		log.Println(`ERROR:`, msg)
 		return v, tea.Quit
 	}
 
@@ -130,7 +131,6 @@ func (v view) View() string {
 	sb := &strings.Builder{}
 
 	viewableLines := v.window.CurrentValues()
-	log.Println(`cursor is`, v.cursorLine)
 
 	for i, l := range viewableLines.Values {
 		s := lipgloss.NewStyle()
@@ -139,8 +139,6 @@ func (v view) View() string {
 			s = s.Inherit(c)
 		}
 		if v.cursorLine == i {
-			log.Println(`found selection`)
-			log.Println(`selection text:`, l.Text)
 			s = s.Inherit(selectedStyle)
 		}
 
