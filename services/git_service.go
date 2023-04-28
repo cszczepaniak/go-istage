@@ -46,11 +46,6 @@ func (gs *GitService) UpdateRepository() error {
 }
 
 func (gs *GitService) ApplyPatch(patchContents string, dir patch.Direction) error {
-	patchContents = `--- a/sampl2.txt
-+++ b/sampl2.txt
-@@ -2,5 +2,6 @@
-+ddd
-`
 	// path, err := writePatchToFile(patchContents)
 	// if err != nil {
 	// 	return err
