@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"fmt"
 	"io"
-	"os"
 	"os/exec"
 	"strings"
 
@@ -46,24 +45,11 @@ func (gs *GitService) UpdateRepository() error {
 }
 
 func (gs *GitService) ApplyPatch(patchContents string, dir patch.Direction) error {
-	// path, err := writePatchToFile(patchContents)
-	// if err != nil {
-	// 	return err
-	// }
-	//defer os.Remove(path)
-
-	// fmt.Println(`tmp file at path:`, path)
-	// fff, err := os.ReadFile(path)
-	// if err != nil {
-	// 	return err
-	// }
-	// fmt.Println(string(fff))
-
 	isUndo := dir == patch.Reset || dir == patch.Unstage
 
-	b := gs.Exec(`apply`)
-	b.WithArgs(`-v`)
+	b := gs.Exec(`apply`).WithStdin(strings.NewReader(patchContents))
 
+	b.WithArgs(`-v`)
 	if dir != patch.Reset {
 		b.WithArgs(`--cached`)
 	}
@@ -71,27 +57,10 @@ func (gs *GitService) ApplyPatch(patchContents string, dir patch.Direction) erro
 		b.WithArgs(`--reverse`)
 	}
 	b.WithArgs(`--whitespace=nowarn`)
-	//b.WithArgs(fmt.Sprintf(`%q`, path))
-	b.WithStdin(strings.NewReader(patchContents))
 
 	fmt.Println(patchContents)
 
 	return b.Run()
-}
-
-func writePatchToFile(contents string) (string, error) {
-	patchFile, err := os.CreateTemp(``, ``)
-	if err != nil {
-		return ``, err
-	}
-	defer patchFile.Close()
-
-	_, err = io.WriteString(patchFile, contents)
-	if err != nil {
-		return ``, err
-	}
-
-	return patchFile.Name(), nil
 }
 
 type gitExecBuilder struct {
