@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 
+	"github.com/cszczepaniak/go-istage/patch"
 	"github.com/cszczepaniak/go-istage/services"
 )
 
@@ -23,12 +24,18 @@ func main() {
 		log.Fatalln(err)
 	}
 
+	ps := services.NewPatchingService(gs, ds)
+
 	for _, e := range ds.Document.Entries {
 		start := e.Offset
 		end := e.Offset + e.Length
-		fmt.Println(`============== ANOTHER ENTRY =================`)
-		for _, l := range ds.Document.Lines[start:end] {
-			fmt.Print(l)
+		for i, l := range ds.Document.Lines[start:end] {
+			fmt.Print(start+i, `:`, l)
 		}
+	}
+
+	err = ps.ApplyPatch(patch.Stage, false, 18)
+	if err != nil {
+		log.Fatalln(err)
 	}
 }
