@@ -53,6 +53,10 @@ func (w *Window[T]) JumpTo(sourceIndex int) {
 	w.start = sourceIndex
 }
 
+func (w *Window[T]) ContainsSourceIndex(sourceIndex int) bool {
+	return sourceIndex >= w.start && sourceIndex < w.end()
+}
+
 func (w *Window[T]) end() int {
 	return w.start + w.size
 }

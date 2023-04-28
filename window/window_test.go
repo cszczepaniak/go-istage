@@ -130,3 +130,52 @@ func TestJumpTo(t *testing.T) {
 	assert.Equal(t, 1, vals.StartIndex)
 	assert.Equal(t, []int{2, 3, 4, 5}, vals.Values)
 }
+
+func TestContainsSourceIndex(t *testing.T) {
+	data := []int{1, 2, 3, 4, 5, 6, 7, 8, 9, 10}
+
+	w := NewWindow(data, 4)
+
+	assert.True(t, w.ContainsSourceIndex(0))
+	assert.True(t, w.ContainsSourceIndex(1))
+	assert.True(t, w.ContainsSourceIndex(2))
+	assert.True(t, w.ContainsSourceIndex(3))
+	assert.False(t, w.ContainsSourceIndex(4))
+	assert.False(t, w.ContainsSourceIndex(5))
+	assert.False(t, w.ContainsSourceIndex(6))
+	assert.False(t, w.ContainsSourceIndex(7))
+	assert.False(t, w.ContainsSourceIndex(8))
+	assert.False(t, w.ContainsSourceIndex(9))
+	assert.False(t, w.ContainsSourceIndex(-1))
+	assert.False(t, w.ContainsSourceIndex(1000))
+
+	w.JumpTo(3)
+
+	assert.False(t, w.ContainsSourceIndex(0))
+	assert.False(t, w.ContainsSourceIndex(1))
+	assert.False(t, w.ContainsSourceIndex(2))
+	assert.True(t, w.ContainsSourceIndex(3))
+	assert.True(t, w.ContainsSourceIndex(4))
+	assert.True(t, w.ContainsSourceIndex(5))
+	assert.True(t, w.ContainsSourceIndex(6))
+	assert.False(t, w.ContainsSourceIndex(7))
+	assert.False(t, w.ContainsSourceIndex(8))
+	assert.False(t, w.ContainsSourceIndex(9))
+	assert.False(t, w.ContainsSourceIndex(-1))
+	assert.False(t, w.ContainsSourceIndex(1000))
+
+	w.Resize(2)
+
+	assert.False(t, w.ContainsSourceIndex(0))
+	assert.False(t, w.ContainsSourceIndex(1))
+	assert.False(t, w.ContainsSourceIndex(2))
+	assert.True(t, w.ContainsSourceIndex(3))
+	assert.True(t, w.ContainsSourceIndex(4))
+	assert.False(t, w.ContainsSourceIndex(5))
+	assert.False(t, w.ContainsSourceIndex(6))
+	assert.False(t, w.ContainsSourceIndex(7))
+	assert.False(t, w.ContainsSourceIndex(8))
+	assert.False(t, w.ContainsSourceIndex(9))
+	assert.False(t, w.ContainsSourceIndex(-1))
+	assert.False(t, w.ContainsSourceIndex(1000))
+}
