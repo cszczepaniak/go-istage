@@ -29,6 +29,10 @@ func (w *Window[T]) Resize(newSize int) {
 	}
 }
 
+func (w *Window[T]) Size() int {
+	return w.size
+}
+
 func (w *Window[T]) ScrollUp() {
 	if w.start <= 0 {
 		return
