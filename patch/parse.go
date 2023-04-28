@@ -39,7 +39,7 @@ func ParseDocument(patches []string) Document {
 				hunks = append(hunks, hunk)
 			}
 
-			hunkOffset = hunkEnd + 1
+			hunkOffset = hunkEnd
 		}
 
 		entry := Entry{
@@ -73,9 +73,21 @@ type hunkInfo struct {
 }
 
 // Hunk information looks like this:
-// @@ -0,0 +1,29 @@
+// @@ -0,0 +1,29 @@ <maybe some garbage afterwards>
 func TryGetHunkInformation(hunkLine string) (hunkInfo, bool) {
-	rngs := strings.FieldsFunc(hunkLine, func(r rune) bool {
+	firstDelim := strings.Index(hunkLine, `@@`)
+	if firstDelim < 0 {
+		return hunkInfo{}, false
+	}
+
+	secondDelim := strings.Index(hunkLine[len(`@@`):], `@@`)
+	if secondDelim < 0 {
+		return hunkInfo{}, false
+	}
+
+	hunkChunk := hunkLine[firstDelim : secondDelim+len(`@@`)]
+
+	rngs := strings.FieldsFunc(hunkChunk, func(r rune) bool {
 		return r == ' ' || r == '@'
 	})
 	if len(rngs) != 2 {
