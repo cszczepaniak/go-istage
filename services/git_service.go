@@ -46,24 +46,40 @@ func (gs *GitService) UpdateRepository() error {
 }
 
 func (gs *GitService) ApplyPatch(patchContents string, dir patch.Direction) error {
-	path, err := writePatchToFile(patchContents)
-	if err != nil {
-		return err
-	}
-	defer os.Remove(path)
+	patchContents = `--- a/sampl2.txt
++++ b/sampl2.txt
+@@ -2,5 +2,6 @@
++ddd
+`
+	// path, err := writePatchToFile(patchContents)
+	// if err != nil {
+	// 	return err
+	// }
+	//defer os.Remove(path)
+
+	// fmt.Println(`tmp file at path:`, path)
+	// fff, err := os.ReadFile(path)
+	// if err != nil {
+	// 	return err
+	// }
+	// fmt.Println(string(fff))
 
 	isUndo := dir == patch.Reset || dir == patch.Unstage
 
 	b := gs.Exec(`apply`)
-	b.WithArgs(`-v`, `--whitespace=nowarn`)
+	b.WithArgs(`-v`)
 
-	if isUndo {
-		b.WithArgs(`--reverse`)
-	}
 	if dir != patch.Reset {
 		b.WithArgs(`--cached`)
 	}
-	b.WithArgs(fmt.Sprintf(`%q`, path))
+	if isUndo {
+		b.WithArgs(`--reverse`)
+	}
+	b.WithArgs(`--whitespace=nowarn`)
+	//b.WithArgs(fmt.Sprintf(`%q`, path))
+	b.WithStdin(strings.NewReader(patchContents))
+
+	fmt.Println(patchContents)
 
 	return b.Run()
 }
@@ -86,6 +102,7 @@ func writePatchToFile(contents string) (string, error) {
 type gitExecBuilder struct {
 	gs *GitService
 
+	stdin      io.Reader
 	updateRepo bool
 	capture    bool
 	args       []string
@@ -99,6 +116,11 @@ func (gs *GitService) Exec(name string) *gitExecBuilder {
 		capture:    true,
 		args:       []string{name},
 	}
+}
+
+func (eb *gitExecBuilder) WithStdin(r io.Reader) *gitExecBuilder {
+	eb.stdin = r
+	return eb
 }
 
 func (eb *gitExecBuilder) SkipUpdate() *gitExecBuilder {
@@ -125,6 +147,9 @@ func (eb *gitExecBuilder) Run() error {
 	if eb.capture {
 		cmd.Stdout = &out
 		cmd.Stderr = &out
+	}
+	if eb.stdin != nil {
+		cmd.Stdin = eb.stdin
 	}
 
 	err := cmd.Run()
