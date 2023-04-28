@@ -54,16 +54,18 @@ func (v view) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case "ctrl+c", "q":
 			return v, tea.Quit
 		case "up":
-			if v.cursorLine > 0 {
-				v.cursorLine--
-			}
+			return v, v.cursorUp
 		case "down":
-			if v.cursorLine < len(v.doc.Lines)-1 {
-				v.cursorLine++
-			}
+			return v, v.cursorDown
+		case "left":
+			return v, v.cursorLeft
+		case "right":
+			return v, v.cursorRight
 		case "s":
 			return v, v.stageLine
 		}
+	case cursorMsg:
+		v.cursorLine = msg.cursor
 	case refreshMsg:
 		return v, v.updateDoc
 	case docMsg:
@@ -78,6 +80,8 @@ func (v view) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 var kindToColor = map[patch.LineKind]lipgloss.Style{
 	patch.AdditionLine: lipgloss.NewStyle().Foreground(lipgloss.Color(`#00FF00`)),
 	patch.RemovalLine:  lipgloss.NewStyle().Foreground(lipgloss.Color(`#FF0000`)),
+	patch.DiffLine:     lipgloss.NewStyle().Foreground(lipgloss.Color(`#FFFFFF`)),
+	patch.HunkLine:     lipgloss.NewStyle().Foreground(lipgloss.Color(`#00FFFF`)),
 }
 
 var selectedStyle = lipgloss.NewStyle().Background(lipgloss.Color(`#555555`))

@@ -7,3 +7,7 @@ type refreshMsg struct{}
 type docMsg struct {
 	d patch.Document
 }
+
+type cursorMsg struct {
+	cursor int
+}
