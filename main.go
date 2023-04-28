@@ -71,18 +71,18 @@ func main() {
 
 	ps := services.NewPatchingService(gs, ds)
 
-	for _, e := range ds.Document.Entries {
-		start := e.Offset
-		end := e.Offset + e.Length
-		for i, l := range ds.Document.Lines[start:end] {
-			fmt.Print(start+i, `:`, l)
-		}
-	}
-
 	if *applyPatch {
 		err = ps.ApplyPatch(patch.Stage, false, linesArg)
 		if err != nil {
 			log.Fatalln(err)
+		}
+	} else {
+		for _, e := range ds.Document.Entries {
+			start := e.Offset
+			end := e.Offset + e.Length
+			for i, l := range ds.Document.Lines[start:end] {
+				fmt.Print(start+i, `:`, l)
+			}
 		}
 	}
 }
