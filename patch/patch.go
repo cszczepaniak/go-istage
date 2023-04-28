@@ -111,7 +111,7 @@ func Compute(doc Document, lineIndices []int, dir Direction) (string, error) {
 				line := doc.Lines[i]
 				kind := line.Kind
 
-				if lineSet.contains(i) || previousIncluded && kind == NoEndOfLineLine {
+				if lineSet.contains(i) || kind == ContextLine || previousIncluded && kind == NoEndOfLineLine {
 					newPatch.WriteString(line.Text)
 					newPatch.WriteString(line.LineBreak)
 					previousIncluded = true
