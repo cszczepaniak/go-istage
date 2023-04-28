@@ -2,29 +2,33 @@ package main
 
 import (
 	"fmt"
-	"os"
+	"log"
 
-	git "github.com/libgit2/git2go/v34"
+	"github.com/cszczepaniak/go-istage/services"
 )
 
 func main() {
-	repo, err := git.OpenRepository("/home/connor/src/go-istage")
-
+	gitEnv, err := services.NewGitEnvironment(`/home/connor/src/go-istage`, ``)
 	if err != nil {
-
-		fmt.Fprintln(os.Stderr, err)
-
-		os.Exit(1)
-
+		log.Fatalln(err)
 	}
 
-	cfg, err := repo.Config()
+	gs, err := services.NewGitService(gitEnv)
 	if err != nil {
-		panic(err)
+		log.Fatalln(err)
 	}
-	s, err := cfg.LookupBool("pull.rebase")
+
+	ds, err := services.NewDocumentService(gs)
 	if err != nil {
-		panic(err)
+		log.Fatalln(err)
 	}
-	fmt.Println(s)
+
+	for _, e := range ds.Document.Entries {
+		start := e.Offset
+		end := e.Offset + e.Length
+		fmt.Println(`============== ANOTHER ENTRY =================`)
+		for _, l := range ds.Document.Lines[start:end] {
+			fmt.Print(l)
+		}
+	}
 }
