@@ -38,6 +38,8 @@ func ParseDocument(patches []string) Document {
 				}
 				hunks = append(hunks, hunk)
 			}
+
+			hunkOffset = hunkEnd + 1
 		}
 
 		entry := Entry{
