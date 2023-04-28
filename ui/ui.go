@@ -22,6 +22,7 @@ type patcher interface {
 type docUpdater interface {
 	UpdateDocument() (patch.Document, error)
 	ToggleView()
+	ViewStage() bool
 }
 
 type view struct {
@@ -66,7 +67,13 @@ func (v view) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			v.updater.ToggleView()
 			return v, v.updateDoc
 		case "s":
-			return v, v.stageLine
+			if !v.updater.ViewStage() {
+				return v, v.stageLine
+			}
+		case "u":
+			if v.updater.ViewStage() {
+				return v, v.unstageLine
+			}
 		}
 	case cursorMsg:
 		v.cursorLine = msg.cursor

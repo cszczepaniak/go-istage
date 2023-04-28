@@ -13,6 +13,14 @@ func (v view) stageLine() tea.Msg {
 	return refreshMsg{}
 }
 
+func (v view) unstageLine() tea.Msg {
+	err := v.patcher.ApplyPatch(patch.Unstage, false, []int{v.cursorLine})
+	if err != nil {
+		return err
+	}
+	return refreshMsg{}
+}
+
 func (v view) updateDoc() tea.Msg {
 	doc, err := v.updater.UpdateDocument()
 	if err != nil {

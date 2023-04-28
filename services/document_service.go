@@ -46,6 +46,10 @@ func (ds *DocumentService) ToggleView() {
 	ds.viewStage = !ds.viewStage
 }
 
+func (ds *DocumentService) ViewStage() bool {
+	return ds.viewStage
+}
+
 func (ds *DocumentService) UpdateDocument() error {
 	var changes []string
 	var err error

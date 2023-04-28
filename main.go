@@ -99,3 +99,7 @@ func (du *docUpdater) UpdateDocument() (patch.Document, error) {
 func (du *docUpdater) ToggleView() {
 	du.ds.ToggleView()
 }
+
+func (du *docUpdater) ViewStage() bool {
+	return du.ds.ViewStage()
+}
