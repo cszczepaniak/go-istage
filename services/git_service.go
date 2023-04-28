@@ -58,8 +58,6 @@ func (gs *GitService) ApplyPatch(patchContents string, dir patch.Direction) erro
 	}
 	b.WithArgs(`--whitespace=nowarn`)
 
-	fmt.Println(patchContents)
-
 	return b.Run()
 }
 
