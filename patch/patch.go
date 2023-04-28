@@ -41,7 +41,7 @@ func Compute(doc Document, lineIndices []int, dir Direction) (string, error) {
 		for _, idx := range idxs {
 			h, ok := ent.FindHunk(idx)
 			if !ok {
-				fmt.Errorf(`dev error: hunk not found for line index %d`, idx)
+				return ``, fmt.Errorf(`dev error: hunk not found for line index %d`, idx)
 			}
 
 			linesByHunk[h] = append(linesByHunk[h], idx)
@@ -88,7 +88,7 @@ func Compute(doc Document, lineIndices []int, dir Direction) (string, error) {
 				fmt.Fprintf(newPatch, "--- a/%s\n", oldPath)
 			} else {
 				fmt.Fprintf(newPatch, "new file mode %s\n", changes.Mode)
-				fmt.Fprintf(newPatch, "--- /dev/null\n", oldPath)
+				fmt.Fprintf(newPatch, "--- /dev/null\n")
 			}
 
 			fmt.Fprintf(newPatch, "+++ b/%s\n", path)
