@@ -52,6 +52,8 @@ func main() {
 
 	flag.TextVar(&linesArg, `lines`, &lines{}, ``)
 
+	flag.Parse()
+
 	gitEnv, err := services.NewGitEnvironment(`/home/connor/src/go-istage`, ``)
 	if err != nil {
 		log.Fatalln(err)
