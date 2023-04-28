@@ -26,7 +26,7 @@ func (ps *PatchingService) ApplyPatch(dir patch.Direction, entireHunk bool, sele
 	doc := ps.ds.Document
 	line := doc.Lines[selectedLine]
 
-	if line.Kind != patch.AdditionLine && line.Kind != patch.RemovalLine {
+	if !line.Kind.IsAdditionOrRemoval() {
 		return nil
 	}
 
