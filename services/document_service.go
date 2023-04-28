@@ -68,6 +68,7 @@ func (ds *DocumentService) unstagedChanges() ([]string, error) {
 		return nil, err
 	}
 	opts.Flags |= git.DiffShowUntrackedContent
+	opts.Flags |= git.DiffRecurseUntracked
 
 	diff, err := ds.gs.repo.DiffIndexToWorkdir(nil, &opts)
 	if err != nil {
