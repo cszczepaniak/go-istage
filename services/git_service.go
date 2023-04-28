@@ -129,7 +129,7 @@ func (eb *gitExecBuilder) Run() error {
 
 	err := cmd.Run()
 	if err != nil {
-		return err
+		return fmt.Errorf("error executing %+v:\n%s", eb.args, out.String())
 	}
 
 	if eb.capture {
