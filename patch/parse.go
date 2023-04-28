@@ -132,11 +132,16 @@ func TryParseRange(s, marker string) (rng, bool) {
 
 func ParseLines(content string) []Line {
 	lines := GetLines(content)
-	headerEnd := GetHeaderEnd(lines)
-
 	res := make([]Line, 0, len(lines))
 
-	for _, l := range lines[:headerEnd+1] {
+	i := 0
+	for i < len(lines) {
+		l := lines[i]
+
+		if strings.HasPrefix(l.text, `@@`) {
+			break
+		}
+
 		kind := HeaderLine
 		if strings.HasPrefix(l.text, `diff --git`) {
 			kind = DiffLine
@@ -147,9 +152,11 @@ func ParseLines(content string) []Line {
 			Text:      l.text,
 			LineBreak: l.lineBreak,
 		})
+
+		i++
 	}
 
-	for _, l := range lines[headerEnd+1:] {
+	for _, l := range lines[i:] {
 		kind := ContextLine
 		switch {
 		case strings.HasPrefix(l.text, `@@`):
@@ -175,15 +182,6 @@ func ParseLines(content string) []Line {
 type line struct {
 	text      string
 	lineBreak string
-}
-
-func GetHeaderEnd(lines []line) int {
-	for i, l := range lines {
-		if strings.HasPrefix(l.text, `+++`) {
-			return i
-		}
-	}
-	return -1
 }
 
 func GetLines(content string) []line {
