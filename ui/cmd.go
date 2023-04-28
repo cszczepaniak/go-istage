@@ -8,7 +8,32 @@ import (
 )
 
 func (v view) stageLine() tea.Msg {
-	err := v.patcher.ApplyPatch(patch.Stage, false, []int{v.cursorLine})
+	lineIdx := v.window.AbsoluteIndex(v.cursorLine)
+	err := v.patcher.ApplyPatch(patch.Stage, false, []int{lineIdx})
+	if err != nil {
+		log.Println(`ERROR:`, err)
+		return err
+	}
+	return refreshMsg{}
+}
+
+func (v view) stageHunk() tea.Msg {
+	lineIdx := v.window.AbsoluteIndex(v.cursorLine)
+	h, ok := v.updater.FindHunk(lineIdx)
+	if !ok {
+		log.Println(`WARN:`, `hunk not found at index`, lineIdx)
+		return nil
+	}
+
+	var lines []int
+	for l := h.LineStart(); l < h.LineEnd(); l++ {
+		dl := v.doc.Lines[l]
+		if dl.Kind.IsAdditionOrRemoval() {
+			lines = append(lines, l)
+		}
+	}
+
+	err := v.patcher.ApplyPatch(patch.Stage, false, lines)
 	if err != nil {
 		log.Println(`ERROR:`, err)
 		return err
@@ -17,7 +42,32 @@ func (v view) stageLine() tea.Msg {
 }
 
 func (v view) unstageLine() tea.Msg {
-	err := v.patcher.ApplyPatch(patch.Unstage, false, []int{v.cursorLine})
+	lineIdx := v.window.AbsoluteIndex(v.cursorLine)
+	err := v.patcher.ApplyPatch(patch.Unstage, false, []int{lineIdx})
+	if err != nil {
+		log.Println(`ERROR:`, err)
+		return err
+	}
+	return refreshMsg{}
+}
+
+func (v view) unstageHunk() tea.Msg {
+	lineIdx := v.window.AbsoluteIndex(v.cursorLine)
+	h, ok := v.updater.FindHunk(lineIdx)
+	if !ok {
+		log.Println(`WARN:`, `hunk not found at index`, lineIdx)
+		return nil
+	}
+
+	var lines []int
+	for l := h.LineStart(); l < h.LineEnd(); l++ {
+		dl := v.doc.Lines[l]
+		if dl.Kind.IsAdditionOrRemoval() {
+			lines = append(lines, l)
+		}
+	}
+
+	err := v.patcher.ApplyPatch(patch.Unstage, false, lines)
 	if err != nil {
 		log.Println(`ERROR:`, err)
 		return err
@@ -35,31 +85,33 @@ func (v view) updateDoc() tea.Msg {
 }
 
 func (v view) cursorLeft() tea.Msg {
-	if v.cursorLine <= 0 {
+	start := v.window.AbsoluteIndex(v.cursorLine)
+	if start <= 0 {
 		return nil
 	}
-	for i := v.cursorLine - 1; i >= 0; i-- {
+	for i := start - 1; i >= 0; i-- {
 		l := v.doc.Lines[i]
 		if l.Kind == patch.HunkLine {
-			return windowJumpMsg{
+			return jumpToDocLineIndexMsg{
 				index: i,
 			}
 		}
 	}
-	return windowJumpMsg{index: 0}
+	return jumpToDocLineIndexMsg{index: 0}
 }
 
 func (v view) cursorRight() tea.Msg {
-	if v.cursorLine >= len(v.doc.Lines)-1 {
+	start := v.window.AbsoluteIndex(v.cursorLine)
+	if start >= len(v.doc.Lines)-1 {
 		return nil
 	}
-	for i := v.cursorLine + 1; i < len(v.doc.Lines); i++ {
+	for i := start + 1; i < len(v.doc.Lines); i++ {
 		l := v.doc.Lines[i]
 		if l.Kind == patch.HunkLine {
-			return windowJumpMsg{
+			return jumpToDocLineIndexMsg{
 				index: i,
 			}
 		}
 	}
-	return windowJumpMsg{index: len(v.doc.Lines) - 1}
+	return jumpToDocLineIndexMsg{index: len(v.doc.Lines) - 1}
 }

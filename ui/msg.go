@@ -8,7 +8,7 @@ type docMsg struct {
 	d patch.Document
 }
 
-type windowJumpMsg struct {
+type jumpToDocLineIndexMsg struct {
 	index int
 }
 

@@ -103,3 +103,15 @@ func (du *docUpdater) ToggleView() {
 func (du *docUpdater) ViewStage() bool {
 	return du.ds.ViewStage()
 }
+
+func (du *docUpdater) FindHunk(idx int) (patch.Hunk, bool) {
+	e, ok := du.ds.Document.FindEntry(idx)
+	if !ok {
+		return patch.Hunk{}, false
+	}
+	h, ok := e.FindHunk(idx)
+	if !ok {
+		return patch.Hunk{}, false
+	}
+	return h, true
+}

@@ -31,6 +31,7 @@ type docUpdater interface {
 	UpdateDocument() (patch.Document, error)
 	ToggleView()
 	ViewStage() bool
+	FindHunk(idx int) (patch.Hunk, bool)
 }
 
 type view struct {
@@ -89,27 +90,43 @@ func (v view) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return v, v.cursorRight
 		case "t":
 			v.updater.ToggleView()
+			log.Println(`toggled view stage:`, v.updater.ViewStage())
 			return v, v.updateDoc
 		case "s":
 			if !v.updater.ViewStage() {
 				return v, v.stageLine
 			}
+		case "S":
+			if !v.updater.ViewStage() {
+				return v, v.stageHunk
+			}
 		case "u":
 			if v.updater.ViewStage() {
 				return v, v.unstageLine
+			}
+		case "U":
+			if v.updater.ViewStage() {
+				return v, v.unstageHunk
 			}
 		}
 	case windowScrollUpMsg:
 		v.window.ScrollUp()
 	case windowScrollDownMsg:
 		v.window.ScrollDown()
-	case windowJumpMsg:
-		v.cursorLine = msg.index
-		v.window.JumpTo(msg.index)
+	case jumpToDocLineIndexMsg:
+		relIndex := v.window.RelativeIndex(msg.index)
+		if relIndex < 0 {
+			v.window.JumpTo(msg.index)
+			relIndex = v.window.RelativeIndex(msg.index)
+		}
+		v.cursorLine = relIndex
 	case refreshMsg:
 		return v, v.updateDoc
 	case docMsg:
 		v.doc = msg.d
+		curr := v.window.CurrentValues()
+		v.window = window.NewWindow(msg.d.Lines, v.h)
+		v.window.JumpTo(curr.StartIndex)
 	case error:
 		log.Println(`ERROR:`, msg)
 		return v, tea.Quit
@@ -117,6 +134,58 @@ func (v view) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	return v, nil
 }
+
+// asdasdasdaS
+// asdasdasdaS
+// asdasdasdaS
+// asdasdasdaS
+// asdasdasdaS
+// asdasdasdaS
+// asdasdasdaS
+// asdasdasdaS
+// asdasdasdaS
+// asdasdasdaS
+// asdasdasdaS
+// asdasdasdaS
+// asdasdasdaS
+// asdasdasdaS
+// asdasdasdaS
+// asdasdasdaS
+// asdasdasdaS
+// asdasdasdaS
+// asdasdasdaS
+// asdasdasdaS
+// asdasdasdaS
+// asdasdasdaS
+// asdasdasdaS
+// asdasdasdaS
+// asdasdasdaS
+// asdasdasdaS
+// asdasdasdaS
+// asdasdasdaS
+// asdasdasdaS
+// asdasdasdaS
+// asdasdasdaS
+// asdasdasdaS
+// asdasdasdaScl
+// asdasdasdaS
+// asdasdasdaS
+// asdasdasdaS
+// asdasdasdaS
+// asdasdasdaS
+// asdasdasdaS
+// asdasdasdaS
+// asdasdasdaS
+// asdasdasdaS
+// asdasdasdaS
+// asdasdasdaS
+// asdasdasdaS
+// asdasdasdaS
+// asdasdasdaS
+// asdasdasdaS
+// asdasdasdaS
+// asdasdasdaS
+// asdasdasdaS
 
 var kindToColor = map[patch.LineKind]lipgloss.Style{
 	patch.AdditionLine: lipgloss.NewStyle().Foreground(lipgloss.Color(`#00FF00`)),
