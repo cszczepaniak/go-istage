@@ -4,18 +4,53 @@ import (
 	"flag"
 	"fmt"
 	"log"
+	"strconv"
+	"strings"
 
 	"github.com/cszczepaniak/go-istage/patch"
 	"github.com/cszczepaniak/go-istage/services"
 )
 
+type lines []int
+
+func (l *lines) UnmarshalText(bs []byte) error {
+	numStrs := strings.Split(string(bs), `,`)
+
+	ls := make(lines, 0, len(numStrs))
+	for _, s := range numStrs {
+		n, err := strconv.Atoi(s)
+		if err != nil {
+			return err
+		}
+		ls = append(ls, n)
+	}
+
+	*l = ls
+	return nil
+}
+
+func (l *lines) MarshalText() ([]byte, error) {
+	if l == nil {
+		return nil, nil
+	}
+	res := &strings.Builder{}
+	for i, n := range *l {
+		res.WriteString(strconv.Itoa(n))
+		if i < len(*l)-1 {
+			res.WriteString(`,`)
+		}
+	}
+	return []byte(res.String()), nil
+}
+
 var (
 	applyPatch = flag.Bool(`apply`, false, `apply`)
-	line       = flag.Int(`line`, 0, `the line`)
 )
 
 func main() {
-	flag.Parse()
+	linesArg := make(lines, 0)
+
+	flag.TextVar(&linesArg, `lines`, &lines{}, ``)
 
 	gitEnv, err := services.NewGitEnvironment(`/home/connor/src/go-istage`, ``)
 	if err != nil {
@@ -43,7 +78,7 @@ func main() {
 	}
 
 	if *applyPatch {
-		err = ps.ApplyPatch(patch.Stage, false, *line)
+		err = ps.ApplyPatch(patch.Stage, false, linesArg)
 		if err != nil {
 			log.Fatalln(err)
 		}
