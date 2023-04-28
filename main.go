@@ -95,3 +95,7 @@ func (du *docUpdater) UpdateDocument() (patch.Document, error) {
 	}
 	return du.ds.Document, nil
 }
+
+func (du *docUpdater) ToggleView() {
+	du.ds.ToggleView()
+}

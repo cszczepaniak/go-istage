@@ -23,7 +23,7 @@ func NewDocumentService(gs *GitService) (*DocumentService, error) {
 	ds := &DocumentService{
 		gs:           gs,
 		viewFiles:    false, // TODO support these
-		viewStage:    false, // TODO support these
+		viewStage:    false,
 		fullFileDiff: false, // TODO support these
 	}
 
@@ -40,6 +40,10 @@ func NewDocumentService(gs *GitService) (*DocumentService, error) {
 	}
 
 	return ds, nil
+}
+
+func (ds *DocumentService) ToggleView() {
+	ds.viewStage = !ds.viewStage
 }
 
 func (ds *DocumentService) UpdateDocument() error {
@@ -101,5 +105,50 @@ func (ds *DocumentService) unstagedChanges() ([]string, error) {
 }
 
 func (ds *DocumentService) stagedChanges() ([]string, error) {
-	return nil, errors.New(`stagedChanges: unimplemented`)
+	opts, err := git.DefaultDiffOptions()
+	if err != nil {
+		return nil, err
+	}
+
+	headRef, err := ds.gs.repo.Head()
+	if err != nil {
+		return nil, err
+	}
+	commit, err := ds.gs.repo.LookupCommit(headRef.Target())
+	if err != nil {
+		return nil, err
+	}
+	tree, err := commit.Tree()
+	if err != nil {
+		return nil, err
+	}
+
+	diff, err := ds.gs.repo.DiffTreeToIndex(tree, nil, &opts)
+	if err != nil {
+		return nil, err
+	}
+
+	ndl, err := diff.NumDeltas()
+	if err != nil {
+		return nil, err
+	}
+
+	res := make([]string, 0, ndl)
+	for i := 0; i < ndl; i++ {
+		p, err := diff.Patch(i)
+		if err != nil {
+			return nil, err
+		}
+
+		txt, err := p.String()
+		if err != nil {
+			return nil, err
+		}
+
+		if txt != `` {
+			res = append(res, txt)
+		}
+	}
+
+	return res, nil
 }
