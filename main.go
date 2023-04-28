@@ -78,10 +78,8 @@ func main() {
 		}
 	} else {
 		for _, e := range ds.Document.Entries {
-			start := e.Offset
-			end := e.Offset + e.Length
-			for i, l := range ds.Document.Lines[start:end] {
-				fmt.Print(start+i, `:`, l)
+			for i, l := range ds.Document.Lines[e.LineStart():e.LineEnd()] {
+				fmt.Print(e.LineStart()+i, `:`, l)
 			}
 		}
 	}

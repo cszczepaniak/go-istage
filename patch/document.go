@@ -21,7 +21,7 @@ func (d Document) FindEntry(lineIndex int) (Entry, bool) {
 
 func (d Document) FindEntryIndex(lineIndex int) int {
 	for i, e := range d.Entries {
-		if e.Offset <= lineIndex && lineIndex <= e.Offset+e.Length {
+		if e.ContainsLine(lineIndex) {
 			return i
 		}
 	}
