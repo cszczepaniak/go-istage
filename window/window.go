@@ -33,6 +33,17 @@ func (w *Window[T]) Size() int {
 	return w.size
 }
 
+func (w *Window[T]) AbsoluteIndex(windowIndex int) int {
+	return w.start + windowIndex
+}
+
+func (w *Window[T]) RelativeIndex(absIndex int) int {
+	if !w.ContainsSourceIndex(absIndex) {
+		return -1
+	}
+	return absIndex - w.start
+}
+
 func (w *Window[T]) ScrollUp() {
 	if w.start <= 0 {
 		return
