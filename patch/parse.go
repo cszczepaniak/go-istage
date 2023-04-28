@@ -47,6 +47,8 @@ func ParseDocument(patches []string) Document {
 			Length: entryLength,
 			Hunks:  hunks,
 		}
+		entry.Changes = ChangesFromHeader(changeLines)
+
 		d.Entries = append(d.Entries, entry)
 	}
 

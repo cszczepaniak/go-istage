@@ -1,7 +1,6 @@
 package patch
 
 import (
-	"errors"
 	"strings"
 )
 
@@ -13,12 +12,12 @@ type Changes struct {
 	OldMode string
 }
 
-func ChangesFromHeader(header []Line) (Changes, error) {
+func ChangesFromHeader(header []Line) Changes {
 	ch := Changes{}
 
 	for _, l := range header {
-		if l.Kind != HeaderLine {
-			return Changes{}, errors.New(`dev error: non-header line found`)
+		if l.Kind != HeaderLine && l.Kind != DiffLine {
+			return ch
 		}
 
 		if strings.HasPrefix(l.Text, `old mode `) {
@@ -37,15 +36,15 @@ func ChangesFromHeader(header []Line) (Changes, error) {
 		}
 
 		if strings.HasPrefix(l.Text, `--- a/`) && !strings.Contains(l.Text, `/dev/null`) {
-			ch.OldPath = strings.TrimPrefix(`--- a/`, l.Text)
+			ch.OldPath = strings.TrimPrefix(l.Text, `--- a/`)
 			continue
 		}
 
-		if strings.HasPrefix(l.Text, `--- b/`) {
-			ch.Path = strings.TrimPrefix(`--- b/`, l.Text)
+		if strings.HasPrefix(l.Text, `+++ b/`) {
+			ch.Path = strings.TrimPrefix(l.Text, `+++ b/`)
 			continue
 		}
 	}
 
-	return ch, nil
+	return ch
 }

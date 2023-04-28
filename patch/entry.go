@@ -1,9 +1,10 @@
 package patch
 
 type Entry struct {
-	Offset int
-	Length int
-	Hunks  []Hunk
+	Offset  int
+	Length  int
+	Hunks   []Hunk
+	Changes Changes
 }
 
 func (pe Entry) FindHunk(lineIndex int) (Hunk, bool) {
