@@ -18,23 +18,25 @@ func NewPatchingService(gs *GitService, ds *DocumentService) *PatchingService {
 	}
 }
 
-func (ps *PatchingService) ApplyPatch(dir patch.Direction, entireHunk bool, selectedLine int) error {
+func (ps *PatchingService) ApplyPatch(dir patch.Direction, entireHunk bool, selectedLines []int) error {
 	if ps.ds.viewFiles {
 		return errors.New(`ApplyPatch: viewFiles unimplemented`)
-	}
-
-	doc := ps.ds.Document
-	line := doc.Lines[selectedLine]
-
-	if !line.Kind.IsAdditionOrRemoval() {
-		return nil
 	}
 
 	var lines []int
 	if entireHunk {
 		return errors.New(`ApplyPatch: entireHunk unimplemented`)
 	} else {
-		lines = []int{selectedLine}
+		doc := ps.ds.Document
+		for _, l := range selectedLines {
+			if doc.Lines[l].Kind.IsAdditionOrRemoval() {
+				lines = append(lines, l)
+			}
+		}
+	}
+
+	if len(lines) == 0 {
+		return nil
 	}
 
 	patch, err := patch.Compute(ps.ds.Document, lines, dir)
