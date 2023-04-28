@@ -30,8 +30,9 @@ type view struct {
 	patcher patcher
 	updater docUpdater
 
-	cursorLine int
-	h, w       int
+	cursorLine          int
+	h, w                int
+	viewStart, viewStop int
 }
 
 func newView(doc patch.Document, p patcher, u docUpdater) view {
@@ -51,6 +52,8 @@ func (v view) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.WindowSizeMsg:
 		v.h = msg.Height
 		v.w = msg.Width
+
+		v.viewStop = v.viewStart + msg.Height
 	case tea.KeyMsg:
 		switch msg.String() {
 		case "ctrl+c", "q":
@@ -100,12 +103,7 @@ var selectedStyle = lipgloss.NewStyle().Background(lipgloss.Color(`#555555`))
 func (v view) View() string {
 	sb := &strings.Builder{}
 
-	numLines := v.h
-	if numLines > len(v.doc.Lines) {
-		numLines = len(v.doc.Lines)
-	}
-
-	for i, l := range v.doc.Lines[:numLines] {
+	for i, l := range v.doc.Lines[v.viewStart:v.viewStop] {
 		s := lipgloss.NewStyle()
 		c, ok := kindToColor[l.Kind]
 		if ok {
