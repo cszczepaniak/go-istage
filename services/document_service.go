@@ -16,7 +16,7 @@ type DocumentService struct {
 	fullFileDiff bool
 	contextLines int
 
-	doc patch.Document
+	Document patch.Document
 }
 
 func NewDocumentService(gs *GitService) (*DocumentService, error) {
@@ -58,7 +58,7 @@ func (ds *DocumentService) UpdateDocument() error {
 		return errors.New(`UpdateDocument: viewFiles unimplemented`)
 	}
 
-	ds.doc = patch.ParseDocument(changes)
+	ds.Document = patch.ParseDocument(changes)
 	return nil
 }
 
