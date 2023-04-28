@@ -37,8 +37,10 @@ func (ps *PatchingService) ApplyPatch(dir patch.Direction, entireHunk bool, sele
 		lines = []int{selectedLine}
 	}
 
-	// TODO compute patch with lines
-	_ = lines
-	return errors.New(`ApplyPatch: computing patch isn't implemented yet`)
-	return ps.gs.ApplyPatch(``, dir)
+	patch, err := patch.Compute(ps.ds.Document, lines, dir)
+	if err != nil {
+		return err
+	}
+
+	return ps.gs.ApplyPatch(patch, dir)
 }
