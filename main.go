@@ -2,13 +2,13 @@ package main
 
 import (
 	"flag"
-	"fmt"
 	"log"
 	"strconv"
 	"strings"
 
 	"github.com/cszczepaniak/go-istage/patch"
 	"github.com/cszczepaniak/go-istage/services"
+	"github.com/cszczepaniak/go-istage/ui"
 )
 
 type lines []int
@@ -77,10 +77,21 @@ func main() {
 			log.Fatalln(err)
 		}
 	} else {
-		for _, e := range ds.Document.Entries {
-			for i, l := range ds.Document.Lines[e.LineStart():e.LineEnd()] {
-				fmt.Print(e.LineStart()+i, `:`, l)
-			}
+		err = ui.RunUI(ds.Document, ps, &docUpdater{ds: ds})
+		if err != nil {
+			log.Fatalln(err)
 		}
 	}
+}
+
+type docUpdater struct {
+	ds *services.DocumentService
+}
+
+func (du *docUpdater) UpdateDocument() (patch.Document, error) {
+	err := du.ds.UpdateDocument()
+	if err != nil {
+		return patch.Document{}, err
+	}
+	return du.ds.Document, nil
 }
