@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"log"
 
@@ -8,7 +9,14 @@ import (
 	"github.com/cszczepaniak/go-istage/services"
 )
 
+var (
+	applyPatch = flag.Bool(`apply`, false, `apply`)
+	line       = flag.Int(`line`, 0, `the line`)
+)
+
 func main() {
+	flag.Parse()
+
 	gitEnv, err := services.NewGitEnvironment(`/home/connor/src/go-istage`, ``)
 	if err != nil {
 		log.Fatalln(err)
@@ -34,8 +42,10 @@ func main() {
 		}
 	}
 
-	err = ps.ApplyPatch(patch.Stage, false, 18)
-	if err != nil {
-		log.Fatalln(err)
+	if *applyPatch {
+		err = ps.ApplyPatch(patch.Stage, false, *line)
+		if err != nil {
+			log.Fatalln(err)
+		}
 	}
 }
