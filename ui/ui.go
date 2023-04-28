@@ -1,17 +1,25 @@
 package ui
 
 import (
+	"log"
 	"strings"
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/cszczepaniak/go-istage/patch"
+	"github.com/cszczepaniak/go-istage/window"
 )
 
 func RunUI(doc patch.Document, p patcher, u docUpdater) error {
+	f, err := tea.LogToFile(`log/debug.log`, `[LOG] `)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+
 	v := newView(doc, p, u)
 	prog := tea.NewProgram(v)
-	_, err := prog.Run()
+	_, err = prog.Run()
 	return err
 }
 
@@ -30,9 +38,10 @@ type view struct {
 	patcher patcher
 	updater docUpdater
 
-	cursorLine          int
-	h, w                int
-	viewStart, viewStop int
+	cursorLine int
+	h, w       int
+
+	window *window.Window[patch.Line]
 }
 
 func newView(doc patch.Document, p patcher, u docUpdater) view {
@@ -40,6 +49,7 @@ func newView(doc patch.Document, p patcher, u docUpdater) view {
 		doc:     doc,
 		patcher: p,
 		updater: u,
+		window:  window.NewWindow(doc.Lines, 0),
 	}
 }
 
@@ -53,15 +63,23 @@ func (v view) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		v.h = msg.Height
 		v.w = msg.Width
 
-		v.viewStop = v.viewStart + msg.Height
+		v.window.Resize(msg.Height)
 	case tea.KeyMsg:
 		switch msg.String() {
 		case "ctrl+c", "q":
 			return v, tea.Quit
 		case "up":
-			return v, v.cursorUp
+			if v.cursorLine == 0 {
+				v.window.ScrollUp()
+			} else {
+				v.cursorLine--
+			}
 		case "down":
-			return v, v.cursorDown
+			if v.cursorLine == v.window.Size()-1 {
+				v.window.ScrollDown()
+			} else {
+				v.cursorLine++
+			}
 		case "left":
 			return v, v.cursorLeft
 		case "right":
@@ -78,8 +96,13 @@ func (v view) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				return v, v.unstageLine
 			}
 		}
-	case cursorMsg:
-		v.cursorLine = msg.cursor
+	case windowScrollUpMsg:
+		v.window.ScrollUp()
+	case windowScrollDownMsg:
+		v.window.ScrollDown()
+	case windowJumpMsg:
+		v.cursorLine = msg.index
+		v.window.JumpTo(msg.index)
 	case refreshMsg:
 		return v, v.updateDoc
 	case docMsg:
@@ -103,13 +126,18 @@ var selectedStyle = lipgloss.NewStyle().Background(lipgloss.Color(`#555555`))
 func (v view) View() string {
 	sb := &strings.Builder{}
 
-	for i, l := range v.doc.Lines[v.viewStart:v.viewStop] {
+	viewableLines := v.window.CurrentValues()
+	log.Println(`cursor is`, v.cursorLine)
+
+	for i, l := range viewableLines.Values {
 		s := lipgloss.NewStyle()
 		c, ok := kindToColor[l.Kind]
 		if ok {
 			s = s.Inherit(c)
 		}
 		if v.cursorLine == i {
+			log.Println(`found selection`)
+			log.Println(`selection text:`, l.Text)
 			s = s.Inherit(selectedStyle)
 		}
 

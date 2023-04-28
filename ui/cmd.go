@@ -29,20 +29,6 @@ func (v view) updateDoc() tea.Msg {
 	return docMsg{d: doc}
 }
 
-func (v view) cursorUp() tea.Msg {
-	if v.cursorLine > 0 {
-		return cursorMsg{cursor: v.cursorLine - 1}
-	}
-	return nil
-}
-
-func (v view) cursorDown() tea.Msg {
-	if v.cursorLine < len(v.doc.Lines)-1 {
-		return cursorMsg{cursor: v.cursorLine + 1}
-	}
-	return nil
-}
-
 func (v view) cursorLeft() tea.Msg {
 	if v.cursorLine <= 0 {
 		return nil
@@ -50,12 +36,12 @@ func (v view) cursorLeft() tea.Msg {
 	for i := v.cursorLine - 1; i >= 0; i-- {
 		l := v.doc.Lines[i]
 		if l.Kind == patch.HunkLine {
-			return cursorMsg{
-				cursor: i,
+			return windowJumpMsg{
+				index: i,
 			}
 		}
 	}
-	return cursorMsg{cursor: 0}
+	return windowJumpMsg{index: 0}
 }
 
 func (v view) cursorRight() tea.Msg {
@@ -65,10 +51,10 @@ func (v view) cursorRight() tea.Msg {
 	for i := v.cursorLine + 1; i < len(v.doc.Lines); i++ {
 		l := v.doc.Lines[i]
 		if l.Kind == patch.HunkLine {
-			return cursorMsg{
-				cursor: i,
+			return windowJumpMsg{
+				index: i,
 			}
 		}
 	}
-	return cursorMsg{cursor: len(v.doc.Lines) - 1}
+	return windowJumpMsg{index: len(v.doc.Lines) - 1}
 }

@@ -8,6 +8,9 @@ type docMsg struct {
 	d patch.Document
 }
 
-type cursorMsg struct {
-	cursor int
+type windowJumpMsg struct {
+	index int
 }
+
+type windowScrollDownMsg struct{}
+type windowScrollUpMsg struct{}
