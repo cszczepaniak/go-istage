@@ -23,7 +23,7 @@ func ParseDocument(patches []string) Document {
 		hunkOffset := GetNextHunk(changeLines, -1)
 		for hunkOffset < len(changeLines) {
 			hunkEnd := GetNextHunk(changeLines, hunkOffset)
-			hunkLength := hunkEnd - hunkOffset + 1
+			hunkLength := hunkEnd - hunkOffset
 			hunkLine := changeLines[hunkOffset].Text
 
 			info, ok := TryGetHunkInformation(hunkLine)
