@@ -64,14 +64,7 @@ func (c *Client) UnstagedChanges() ([]string, error) {
 		return nil, err
 	}
 
-	findOpts, err := git.DefaultDiffFindOptions()
-	if err != nil {
-		return nil, err
-	}
-	findOpts.Flags |= git.DiffFindRenames
-	findOpts.Flags |= git.DiffFindForUntracked
-
-	err = diff.FindSimilar(&findOpts)
+	err = handleRenames(diff)
 	if err != nil {
 		return nil, err
 	}
@@ -125,6 +118,11 @@ func (c *Client) StagedChanges() ([]string, error) {
 		return nil, err
 	}
 
+	err = handleRenames(diff)
+	if err != nil {
+		return nil, err
+	}
+
 	ndl, err := diff.NumDeltas()
 	if err != nil {
 		return nil, err
@@ -148,4 +146,15 @@ func (c *Client) StagedChanges() ([]string, error) {
 	}
 
 	return res, nil
+}
+
+func handleRenames(diff *git.Diff) error {
+	findOpts, err := git.DefaultDiffFindOptions()
+	if err != nil {
+		return err
+	}
+	findOpts.Flags |= git.DiffFindRenames
+	findOpts.Flags |= git.DiffFindForUntracked
+
+	return diff.FindSimilar(&findOpts)
 }
