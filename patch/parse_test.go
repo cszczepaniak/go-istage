@@ -104,7 +104,233 @@ func TestParseDocument(t *testing.T) {
 		},
 	}
 
+	expLines := []Line{{
+		Kind: DiffLine,
+		Text: `diff --git a/change_file.txt b/change_file.txt`,
+	}, {
+		Kind: HeaderLine,
+		Text: `index 2674c46..6381df1 100644`,
+	}, {
+		Kind: HeaderLine,
+		Text: `--- a/change_file.txt`,
+	}, {
+		Kind: HeaderLine,
+		Text: `+++ b/change_file.txt`,
+	}, {
+		Kind: HunkLine,
+		Text: `@@ -2,6 +2,12 @@`,
+	}, {
+		Kind: ContextLine,
+		Text: ` 1`,
+	}, {
+		Kind: ContextLine,
+		Text: ` 2`,
+	}, {
+		Kind: ContextLine,
+		Text: ` 3`,
+	}, {
+		Kind: AdditionLine,
+		Text: `+a`,
+	}, {
+		Kind: AdditionLine,
+		Text: `+b`,
+	}, {
+		Kind: AdditionLine,
+		Text: `+c`,
+	}, {
+		Kind: AdditionLine,
+		Text: `+d`,
+	}, {
+		Kind: AdditionLine,
+		Text: `+e`,
+	}, {
+		Kind: AdditionLine,
+		Text: `+f`,
+	}, {
+		Kind: ContextLine,
+		Text: ` 4`,
+	}, {
+		Kind: ContextLine,
+		Text: ` 5`,
+	}, {
+		Kind: ContextLine,
+		Text: ` 6`,
+	}, {
+		Kind: HunkLine,
+		Text: `@@ -11,7 +17,7 @@`,
+	}, {
+		Kind: ContextLine,
+		Text: ` 10`,
+	}, {
+		Kind: ContextLine,
+		Text: ` 11`,
+	}, {
+		Kind: ContextLine,
+		Text: ` 12`,
+	}, {
+		Kind: RemovalLine,
+		Text: `-13`,
+	}, {
+		Kind: AdditionLine,
+		Text: `+thirteen`,
+	}, {
+		Kind: ContextLine,
+		Text: ` 14`,
+	}, {
+		Kind: ContextLine,
+		Text: ` 15`,
+	}, {
+		Kind: ContextLine,
+		Text: ` 16`,
+	}, {
+		Kind: HunkLine,
+		Text: `@@ -23,11 +29,9 @@`,
+	}, {
+		Kind: ContextLine,
+		Text: ` 22`,
+	}, {
+		Kind: ContextLine,
+		Text: ` 23`,
+	}, {
+		Kind: ContextLine,
+		Text: ` 24`,
+	}, {
+		Kind: RemovalLine,
+		Text: `-25`,
+	}, {
+		Kind: RemovalLine,
+		Text: `-26`,
+	}, {
+		Kind: RemovalLine,
+		Text: `-27`,
+	}, {
+		Kind: RemovalLine,
+		Text: `-28`,
+	}, {
+		Kind: RemovalLine,
+		Text: `-29`,
+	}, {
+		Kind: AdditionLine,
+		Text: `+x`,
+	}, {
+		Kind: AdditionLine,
+		Text: `+y`,
+	}, {
+		Kind: AdditionLine,
+		Text: `+z`,
+	}, {
+		Kind: ContextLine,
+		Text: ` 30`,
+	}, {
+		Kind: ContextLine,
+		Text: ` 31`,
+	}, {
+		Kind: ContextLine,
+		Text: ` 32`,
+	}, {
+		Kind: HunkLine,
+		Text: `@@ -35,4 +39,4 @@`,
+	}, {
+		Kind: ContextLine,
+		Text: ` 34`,
+	}, {
+		Kind: ContextLine,
+		Text: ` 35`,
+	}, {
+		Kind: ContextLine,
+		Text: ` 36`,
+	}, {
+		Kind: RemovalLine,
+		Text: `-37`,
+	}, {
+		Kind: AdditionLine,
+		Text: `+37`,
+	}, {
+		Kind: NoEndOfLineLine,
+		Text: `\ No newline at end of file`,
+	}, {
+		Kind: DiffLine,
+		Text: `diff --git a/change_mode.txt b/change_mode.txt`,
+	}, {
+		Kind: HeaderLine,
+		Text: `old mode 100644`,
+	}, {
+		Kind: HeaderLine,
+		Text: `new mode 100755`,
+	}, {
+		Kind: DiffLine,
+		Text: `diff --git a/new_file.txt b/new_file.txt`,
+	}, {
+		Kind: HeaderLine,
+		Text: `new file mode 100644`,
+	}, {
+		Kind: HeaderLine,
+		Text: `index 0000000..1fa3451`,
+	}, {
+		Kind: HeaderLine,
+		Text: `--- /dev/null`,
+	}, {
+		Kind: HeaderLine,
+		Text: `+++ b/new_file.txt`,
+	}, {
+		Kind: HunkLine,
+		Text: `@@ -0,0 +1,4 @@`,
+	}, {
+		Kind: AdditionLine,
+		Text: `+abc`,
+	}, {
+		Kind: AdditionLine,
+		Text: `+abc`,
+	}, {
+		Kind: AdditionLine,
+		Text: `+abc`,
+	}, {
+		Kind: AdditionLine,
+		Text: `+abc`,
+	}, {
+		Kind: DiffLine,
+		Text: `diff --git a/deleted_file.txt b/deleted_file.txt`,
+	}, {
+		Kind: HeaderLine,
+		Text: `deleted file mode 100755`,
+	}, {
+		Kind: HeaderLine,
+		Text: `index e51e7d2..0000000`,
+	}, {
+		Kind: HeaderLine,
+		Text: `--- a/deleted_file.txt`,
+	}, {
+		Kind: HeaderLine,
+		Text: `+++ /dev/null`,
+	}, {
+		Kind: HunkLine,
+		Text: `@@ -1,5 +0,0 @@`,
+	}, {
+		Kind: RemovalLine,
+		Text: `-asdasdasd`,
+	}, {
+		Kind: RemovalLine,
+		Text: `-`,
+	}, {
+		Kind: RemovalLine,
+		Text: `-def`,
+	}, {
+		Kind: RemovalLine,
+		Text: `-`,
+	}, {
+		Kind: RemovalLine,
+		Text: `-ghi`,
+	}}
+
 	doc := ParseDocument(patches)
+
+	require.Len(t, doc.Lines, len(expLines))
+
+	for i, exp := range expLines {
+		l := doc.Lines[i]
+		l.LineBreak = ``
+		assert.Equal(t, exp, l, `line %d was wrong`, i)
+	}
 
 	require.Len(t, doc.Entries, 4)
 	for i, exp := range []Entry{entry0, entry1, entry2, entry3} {
