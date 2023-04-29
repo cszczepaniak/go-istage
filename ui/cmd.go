@@ -3,6 +3,7 @@ package ui
 import (
 	"fmt"
 	"runtime/debug"
+	"strings"
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/cszczepaniak/go-istage/logging"
@@ -145,5 +146,15 @@ func (v view) updateDocs(staged bool) tea.Cmd {
 		}
 
 		return docMsg{d: doc, staged: staged}
+	}
+}
+
+func (v view) commit(msg string) tea.Cmd {
+	return func() tea.Msg {
+		return v.gitExecer.
+			Exec(`commit`).
+			WithArgs(`-F`, `-`).
+			WithStdin(strings.NewReader(msg)).
+			Run()
 	}
 }
