@@ -6,6 +6,85 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+func TestParseDocument(t *testing.T) {
+
+}
+
+func TestParseLines(t *testing.T) {
+	tests := []struct {
+		desc       string
+		inputLines []line
+		expLines   []Line
+	}{{
+		desc: `header with no hunk`,
+		inputLines: []line{{
+			text:      `literally does not matter`,
+			lineBreak: "\n",
+		}, {
+			text:      `like at all`,
+			lineBreak: "\n",
+		}, {
+			text:      `diff --git foobar`,
+			lineBreak: "\n",
+		}},
+		expLines: []Line{{
+			Kind:      HeaderLine,
+			Text:      `literally does not matter`,
+			LineBreak: "\n",
+		}, {
+			Kind:      HeaderLine,
+			Text:      `like at all`,
+			LineBreak: "\n",
+		}, {
+			Kind:      DiffLine,
+			Text:      `diff --git foobar`,
+			LineBreak: "\n",
+		}},
+	}, {
+		desc: `hunk`,
+		inputLines: []line{{
+			text: `@@ does not have to be a well-formed hunk`,
+		}, {
+			text: `+ addition`,
+		}, {
+			text: `- removal`,
+		}, {
+			text: `context`,
+		}, {
+			text: `context`,
+		}, {
+			text: `\ no end of line`,
+		}},
+		expLines: []Line{{
+			Kind: HunkLine,
+			Text: `@@ does not have to be a well-formed hunk`,
+		}, {
+			Kind: AdditionLine,
+			Text: `+ addition`,
+		}, {
+			Kind: RemovalLine,
+			Text: `- removal`,
+		}, {
+			Kind: ContextLine,
+			Text: `context`,
+		}, {
+			Kind: ContextLine,
+			Text: `context`,
+		}, {
+			Kind: NoEndOfLineLine,
+			Text: `\ no end of line`,
+		}},
+	}}
+
+	for _, tc := range tests {
+		tc := tc
+		t.Run(tc.desc, func(t *testing.T) {
+			ls := ParseLines(tc.inputLines)
+			assert.Equal(t, tc.expLines, ls)
+		})
+	}
+}
+
 func TestGetLines(t *testing.T) {
 	tests := []struct {
 		desc     string

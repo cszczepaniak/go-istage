@@ -14,7 +14,8 @@ func ParseDocument(patches []string) Document {
 	var d Document
 
 	for _, p := range patches {
-		changeLines := ParseLines(p)
+		rawLines := GetLines(p)
+		changeLines := ParseLines(rawLines)
 		entryOffset := len(d.Lines)
 		entryLength := len(changeLines)
 		d.Lines = append(d.Lines, changeLines...)
@@ -144,8 +145,7 @@ func TryParseRange(s, marker string) (rng, bool) {
 	return r, true
 }
 
-func ParseLines(content string) []Line {
-	lines := GetLines(content)
+func ParseLines(lines []line) []Line {
 	res := make([]Line, 0, len(lines))
 
 	i := 0
