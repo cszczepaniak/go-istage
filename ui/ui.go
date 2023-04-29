@@ -128,58 +128,6 @@ func (v view) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return v, nil
 }
 
-// asdasdasdaS
-// asdasdasdaS
-// asdasdasdaS
-// asdasdasdaS
-// asdasdasdaS
-// asdasdasdaS
-// asdasdasdaS
-// asdasdasdaS
-// asdasdasdaS
-// asdasdasdaS
-// asdasdasdaS
-// asdasdasdaS
-// asdasdasdaS
-// asdasdasdaS
-// asdasdasdaS
-// asdasdasdaS
-// asdasdasdaS
-// asdasdasdaS
-// asdasdasdaS
-// asdasdasdaS
-// asdasdasdaS
-// asdasdasdaS
-// asdasdasdaS
-// asdasdasdaS
-// asdasdasdaS
-// asdasdasdaS
-// asdasdasdaS
-// asdasdasdaS
-// asdasdasdaS
-// asdasdasdaS
-// asdasdasdaS
-// asdasdasdaS
-// asdasdasdaScl
-// asdasdasdaS
-// asdasdasdaS
-// asdasdasdaS
-// asdasdasdaS
-// asdasdasdaS
-// asdasdasdaS
-// asdasdasdaS
-// asdasdasdaS
-// asdasdasdaS
-// asdasdasdaS
-// asdasdasdaS
-// asdasdasdaS
-// asdasdasdaS
-// asdasdasdaS
-// asdasdasdaS
-// asdasdasdaS
-// asdasdasdaS
-// asdasdasdaS
-
 var kindToColor = map[patch.LineKind]lipgloss.Style{
 	patch.AdditionLine: lipgloss.NewStyle().Foreground(lipgloss.Color(`#00FF00`)),
 	patch.RemovalLine:  lipgloss.NewStyle().Foreground(lipgloss.Color(`#FF0000`)),
