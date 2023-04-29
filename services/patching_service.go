@@ -1,37 +1,24 @@
 package services
 
 import (
-	"errors"
-
 	"github.com/cszczepaniak/go-istage/patch"
 )
 
 type PatchingService struct {
 	gs *GitService
-	ds *DocumentService
 }
 
-func NewPatchingService(gs *GitService, ds *DocumentService) *PatchingService {
+func NewPatchingService(gs *GitService) *PatchingService {
 	return &PatchingService{
 		gs: gs,
-		ds: ds,
 	}
 }
 
-func (ps *PatchingService) ApplyPatch(dir patch.Direction, entireHunk bool, selectedLines []int) error {
-	if ps.ds.viewFiles {
-		return errors.New(`ApplyPatch: viewFiles unimplemented`)
-	}
-
+func (ps *PatchingService) ApplyPatch(dir patch.Direction, doc patch.Document, selectedLines []int) error {
 	var lines []int
-	if entireHunk {
-		return errors.New(`ApplyPatch: entireHunk unimplemented`)
-	} else {
-		doc := ps.ds.Document
-		for _, l := range selectedLines {
-			if doc.Lines[l].Kind.IsAdditionOrRemoval() {
-				lines = append(lines, l)
-			}
+	for _, l := range selectedLines {
+		if doc.Lines[l].Kind.IsAdditionOrRemoval() {
+			lines = append(lines, l)
 		}
 	}
 
@@ -39,7 +26,7 @@ func (ps *PatchingService) ApplyPatch(dir patch.Direction, entireHunk bool, sele
 		return nil
 	}
 
-	patch, err := patch.Compute(ps.ds.Document, lines, dir)
+	patch, err := patch.Compute(doc, lines, dir)
 	if err != nil {
 		return err
 	}
