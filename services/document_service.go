@@ -11,7 +11,6 @@ type DocumentService struct {
 	viewFiles    bool
 	viewStage    bool
 	fullFileDiff bool
-	contextLines int
 }
 
 func NewDocumentService(gs *GitService) (*DocumentService, error) {
