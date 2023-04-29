@@ -69,29 +69,7 @@ func (c *Client) UnstagedChanges() ([]string, error) {
 		return nil, err
 	}
 
-	ndl, err := diff.NumDeltas()
-	if err != nil {
-		return nil, err
-	}
-
-	res := make([]string, 0, ndl)
-	for i := 0; i < ndl; i++ {
-		p, err := diff.Patch(i)
-		if err != nil {
-			return nil, err
-		}
-
-		txt, err := p.String()
-		if err != nil {
-			return nil, err
-		}
-
-		if txt != `` {
-			res = append(res, txt)
-		}
-	}
-
-	return res, nil
+	return patchesFromDiff(diff)
 }
 
 func (c *Client) StagedChanges() ([]string, error) {
@@ -123,6 +101,10 @@ func (c *Client) StagedChanges() ([]string, error) {
 		return nil, err
 	}
 
+	return patchesFromDiff(diff)
+}
+
+func patchesFromDiff(diff *git.Diff) ([]string, error) {
 	ndl, err := diff.NumDeltas()
 	if err != nil {
 		return nil, err
