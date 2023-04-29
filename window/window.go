@@ -34,11 +34,14 @@ func (w *Window[T]) Size() int {
 }
 
 func (w *Window[T]) AbsoluteIndex(windowIndex int) int {
+	if windowIndex >= w.size {
+		windowIndex = w.size - 1
+	}
 	return w.start + windowIndex
 }
 
 func (w *Window[T]) RelativeIndex(absIndex int) int {
-	if !w.ContainsSourceIndex(absIndex) {
+	if !w.ContainsAbsoluteIndex(absIndex) {
 		return -1
 	}
 	return absIndex - w.start
@@ -68,7 +71,7 @@ func (w *Window[T]) JumpTo(sourceIndex int) {
 	w.start = sourceIndex
 }
 
-func (w *Window[T]) ContainsSourceIndex(sourceIndex int) bool {
+func (w *Window[T]) ContainsAbsoluteIndex(sourceIndex int) bool {
 	return sourceIndex >= w.start && sourceIndex < w.end()
 }
 
