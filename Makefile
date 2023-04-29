@@ -9,3 +9,7 @@ build:
 .PHONY: install
 install:
 	go install -tags "static"
+
+.PHONY: test
+test:
+	go test -tags "static" ./...
