@@ -94,6 +94,8 @@ func (v view) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			if v.viewStage {
 				return v, v.unstageHunk
 			}
+		case "r":
+			return v, v.revertLine
 		}
 	case refreshMsg:
 		return v, v.updateDocs(v.viewStage)

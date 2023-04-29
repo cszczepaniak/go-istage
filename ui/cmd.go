@@ -89,6 +89,23 @@ func (v view) unstageHunk() (msg tea.Msg) {
 	return refreshMsg{}
 }
 
+func (v view) revertLine() (msg tea.Msg) {
+	if v.viewStage {
+		return nil
+	}
+
+	err := v.patcher.ApplyPatch(
+		patch.Reset,
+		v.currentView().doc,
+		[]int{v.currentView().currentLine()},
+	)
+	if err != nil {
+		logging.Error(`revertLine failed`, `err`, err)
+		return err
+	}
+	return refreshMsg{}
+}
+
 func (v view) updateDocs(staged bool) tea.Cmd {
 	return func() tea.Msg {
 		var doc patch.Document
