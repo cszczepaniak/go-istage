@@ -43,6 +43,8 @@ type view struct {
 	committing  bool
 	commitInput textarea.Model
 
+	err error
+
 	h, w int
 }
 
@@ -67,17 +69,38 @@ func (v view) Init() tea.Cmd {
 }
 
 func (v view) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+	if v.err != nil {
+		switch msg := msg.(type) {
+		case tea.KeyMsg:
+			switch msg.String() {
+			case "q", "ctrl+c":
+				return v, tea.Quit
+			case "esc", "enter":
+				v.err = nil
+				return v, nil
+			}
+
+			return v, nil
+		}
+	}
+
 	if v.committing {
 		switch msg := msg.(type) {
 		case tea.KeyMsg:
 			switch msg.String() {
 			case "ctrl+c":
 				return v, tea.Quit
-			case "enter":
+			case "esc", "enter":
 				commitMsg := v.commitInput.Value()
-				v.commitInput.Reset()
 				v.committing = false
-				return v, tea.Sequence(v.commit(commitMsg), tea.Batch(v.updateDocs(false), v.updateDocs(true)))
+				if msg.String() == "enter" {
+					v.commitInput.Reset()
+					return v, tea.Sequence(
+						v.commit(commitMsg),
+						tea.Batch(v.updateDocs(false), v.updateDocs(true)),
+					)
+				}
+				return v, nil
 			}
 			mdl, cmd := v.commitInput.Update(msg)
 			v.commitInput = mdl
@@ -154,7 +177,7 @@ func (v view) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 	case error:
 		logging.Error(`update.error`, `err`, msg)
-		return v, tea.Quit
+		v.err = msg
 	}
 
 	return v, nil
@@ -168,8 +191,16 @@ var kindToColor = map[patch.LineKind]lipgloss.Style{
 }
 
 var selectedStyle = lipgloss.NewStyle().Background(lipgloss.Color(`#555555`))
+var errMessageStyle = lipgloss.NewStyle().Foreground(lipgloss.Color(`#777777`))
 
 func (v view) View() string {
+	if v.err != nil {
+		return fmt.Sprintf("%s\n\n%s\n\n%s",
+			"An error occurred:",
+			errMessageStyle.Render(v.err.Error()),
+			"Press enter to continue",
+		)
+	}
 	if v.committing {
 		return fmt.Sprintf("Enter a commit message:\n\n%s\n\n%s", v.commitInput.View(), "(enter to commit; esc to abort)")
 	}
