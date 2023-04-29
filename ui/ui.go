@@ -18,20 +18,21 @@ func RunUI(doc patch.Document, p patcher, u docUpdater) error {
 }
 
 type patcher interface {
-	ApplyPatch(dir patch.Direction, entireHunk bool, selectedLines []int) error
+	ApplyPatch(dir patch.Direction, doc patch.Document, selectedLines []int) error
 }
 
 type docUpdater interface {
-	UpdateDocument() (patch.Document, error)
-	ToggleView()
-	ViewStage() bool
-	FindHunk(idx int) (patch.Hunk, bool)
+	StagedChanges() (patch.Document, error)
+	UnstagedChanges() (patch.Document, error)
 }
 
 type view struct {
-	doc     patch.Document
 	patcher patcher
 	updater docUpdater
+
+	viewStage bool
+	staged    patch.Document
+	unstaged  patch.Document
 
 	cursorLine int
 	h, w       int
@@ -41,15 +42,21 @@ type view struct {
 
 func newView(doc patch.Document, p patcher, u docUpdater) view {
 	return view{
-		doc:     doc,
 		patcher: p,
 		updater: u,
 		window:  window.NewWindow(doc.Lines, 0),
 	}
 }
 
+func (v view) currentDoc() patch.Document {
+	if v.viewStage {
+		return v.staged
+	}
+	return v.unstaged
+}
+
 func (v view) Init() tea.Cmd {
-	return nil
+	return tea.Batch(v.updateDocs(false), v.updateDocs(true))
 }
 
 func (v view) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -83,22 +90,22 @@ func (v view) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case "right":
 			return v, v.cursorRight
 		case "t":
-			v.updater.ToggleView()
-			return v, v.updateDoc
+			v.viewStage = !v.viewStage
+			return v, v.updateDocs(v.viewStage)
 		case "s":
-			if !v.updater.ViewStage() {
+			if !v.viewStage {
 				return v, v.stageLine
 			}
 		case "S":
-			if !v.updater.ViewStage() {
+			if !v.viewStage {
 				return v, v.stageHunk
 			}
 		case "u":
-			if v.updater.ViewStage() {
+			if v.viewStage {
 				return v, v.unstageLine
 			}
 		case "U":
-			if v.updater.ViewStage() {
+			if v.viewStage {
 				return v, v.unstageHunk
 			}
 		}
@@ -114,9 +121,14 @@ func (v view) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 		v.cursorLine = relIndex
 	case refreshMsg:
-		return v, v.updateDoc
+		return v, v.updateDocs(v.viewStage)
 	case docMsg:
-		v.doc = msg.d
+		if v.viewStage {
+			v.staged = msg.d
+		} else {
+			v.unstaged = msg.d
+		}
+
 		curr := v.window.CurrentValues()
 		v.window = window.NewWindow(msg.d.Lines, v.h)
 		v.window.JumpTo(curr.StartIndex)

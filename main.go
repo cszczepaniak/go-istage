@@ -7,7 +7,6 @@ import (
 	"strings"
 
 	"github.com/cszczepaniak/go-istage/logging"
-	"github.com/cszczepaniak/go-istage/patch"
 	"github.com/cszczepaniak/go-istage/services"
 	"github.com/cszczepaniak/go-istage/ui"
 )
@@ -71,42 +70,15 @@ func main() {
 		log.Fatalln(err)
 	}
 
-	ps := services.NewPatchingService(gs, ds)
+	ps := services.NewPatchingService(gs)
 
-		err = ui.RunUI(ds.Document, ps, &docUpdater{ds: ds})
-		if err != nil {
-			log.Fatalln(err)
-	}
-}
-
-type docUpdater struct {
-	ds *services.DocumentService
-}
-
-func (du *docUpdater) UpdateDocument() (patch.Document, error) {
-	err := du.ds.UpdateDocument()
+	doc, err := ds.UnstagedChanges()
 	if err != nil {
-		return patch.Document{}, err
+		log.Fatalln(err)
 	}
-	return du.ds.Document, nil
-}
 
-func (du *docUpdater) ToggleView() {
-	du.ds.ToggleView()
-}
-
-func (du *docUpdater) ViewStage() bool {
-	return du.ds.ViewStage()
-}
-
-func (du *docUpdater) FindHunk(idx int) (patch.Hunk, bool) {
-	e, ok := du.ds.Document.FindEntry(idx)
-	if !ok {
-		return patch.Hunk{}, false
+	err = ui.RunUI(doc, ps, ds)
+	if err != nil {
+		log.Fatalln(err)
 	}
-	h, ok := e.FindHunk(idx)
-	if !ok {
-		return patch.Hunk{}, false
-	}
-	return h, true
 }
