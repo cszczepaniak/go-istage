@@ -102,6 +102,9 @@ func (v view) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return v, v.revertLine
 		case "R":
 			return v, v.revertHunk
+		case "c":
+			v.committing = true
+			return v, v.commitInput.Focus()
 		}
 	case refreshMsg:
 		return v, v.updateDocs(v.viewStage)
@@ -133,5 +136,8 @@ var kindToColor = map[patch.LineKind]lipgloss.Style{
 var selectedStyle = lipgloss.NewStyle().Background(lipgloss.Color(`#555555`))
 
 func (v view) View() string {
+	if v.committing {
+		return fmt.Sprintf("Enter a commit message:\n\n%s\n\n%s", v.commitInput.View(), "(enter to commit; esc to abort)")
+	}
 	return v.currentView().view()
 }
