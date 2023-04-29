@@ -44,10 +44,6 @@ func (l *lines) MarshalText() ([]byte, error) {
 	return []byte(res.String()), nil
 }
 
-var (
-	applyPatch = flag.Bool(`apply`, false, `apply`)
-)
-
 func main() {
 	linesArg := make(lines, 0)
 
@@ -77,16 +73,9 @@ func main() {
 
 	ps := services.NewPatchingService(gs, ds)
 
-	if *applyPatch {
-		err = ps.ApplyPatch(patch.Stage, false, linesArg)
-		if err != nil {
-			log.Fatalln(err)
-		}
-	} else {
 		err = ui.RunUI(ds.Document, ps, &docUpdater{ds: ds})
 		if err != nil {
 			log.Fatalln(err)
-		}
 	}
 }
 
