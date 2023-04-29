@@ -1,14 +1,18 @@
 package ui
 
 import (
+	"fmt"
+
+	"github.com/charmbracelet/bubbles/textarea"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/cszczepaniak/go-istage/logging"
 	"github.com/cszczepaniak/go-istage/patch"
+	"github.com/cszczepaniak/go-istage/services"
 )
 
-func RunUI(p patcher, u docUpdater) error {
-	v := newView(p, u)
+func RunUI(p patcher, u docUpdater, ge gitExecer) error {
+	v := newView(p, u, ge)
 	prog := tea.NewProgram(v)
 	_, err := prog.Run()
 	return err
@@ -23,21 +27,31 @@ type docUpdater interface {
 	UnstagedChanges() (patch.Document, error)
 }
 
+type gitExecer interface {
+	Exec(cmd string) *services.GitExecBuilder
+}
+
 type view struct {
-	patcher patcher
-	updater docUpdater
+	patcher   patcher
+	updater   docUpdater
+	gitExecer gitExecer
 
 	viewStage    bool
 	stagedView   *documentView
 	unstagedView *documentView
 
+	committing  bool
+	commitInput textarea.Model
+
 	h, w int
 }
 
-func newView(p patcher, u docUpdater) view {
+func newView(p patcher, u docUpdater, ge gitExecer) view {
 	return view{
-		patcher: p,
-		updater: u,
+		commitInput: textarea.New(),
+		patcher:     p,
+		updater:     u,
+		gitExecer:   ge,
 	}
 }
 
@@ -49,10 +63,28 @@ func (v view) currentView() *documentView {
 }
 
 func (v view) Init() tea.Cmd {
-	return tea.Batch(v.updateDocs(false), v.updateDocs(true))
+	return tea.Batch(v.updateDocs(false), v.updateDocs(true), textarea.Blink)
 }
 
 func (v view) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+	if v.committing {
+		switch msg := msg.(type) {
+		case tea.KeyMsg:
+			switch msg.String() {
+			case "ctrl+c":
+				return v, tea.Quit
+			case "enter":
+				commitMsg := v.commitInput.Value()
+				v.commitInput.Reset()
+				v.committing = false
+				return v, tea.Sequence(v.commit(commitMsg), tea.Batch(v.updateDocs(false), v.updateDocs(true)))
+			}
+			mdl, cmd := v.commitInput.Update(msg)
+			v.commitInput = mdl
+			return v, cmd
+		}
+	}
+
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
 		// I'm not really sure why, but it seems like to make bubbletea render properly, we need to subtract 1 from the
@@ -67,9 +99,11 @@ func (v view) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		if v.unstagedView != nil {
 			v.unstagedView.resize(v.h)
 		}
+
+		v.commitInput.SetWidth(v.w)
 	case tea.KeyMsg:
 		switch msg.String() {
-		case "ctrl+c", "q":
+		case "q":
 			return v, tea.Quit
 		case "up":
 			v.currentView().navigate(navigateUp)
