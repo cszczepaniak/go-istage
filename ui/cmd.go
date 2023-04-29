@@ -106,6 +106,29 @@ func (v view) revertLine() (msg tea.Msg) {
 	return refreshMsg{}
 }
 
+func (v view) revertHunk() (msg tea.Msg) {
+	defer func() {
+		if r := recover(); r != nil {
+			msg = fmt.Errorf("panic recovered: %+v\n%s", r, debug.Stack())
+		}
+	}()
+
+	if v.viewStage {
+		return nil
+	}
+
+	err := v.patcher.ApplyPatch(
+		patch.Reset,
+		v.currentView().doc,
+		v.currentView().linesInCurrentHunk(),
+	)
+	if err != nil {
+		logging.Error(`revertHunk failed`, `err`, err)
+		return err
+	}
+	return refreshMsg{}
+}
+
 func (v view) updateDocs(staged bool) tea.Cmd {
 	return func() tea.Msg {
 		var doc patch.Document
