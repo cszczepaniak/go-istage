@@ -54,7 +54,7 @@ func Compute(doc Document, lineIndices []int, dir Direction) (string, error) {
 			newStart := hunk.NewStart
 
 			oldLength := 0
-			for i := hunk.Offset; i < hunk.Offset+hunk.Length && i < len(doc.Lines); /* TODO fix hunk bug and remove the len check */ i++ {
+			for i := hunk.LineStart(); i < hunk.LineEnd(); i++ {
 				line := doc.Lines[i]
 				kind := line.Kind
 
@@ -107,7 +107,7 @@ func Compute(doc Document, lineIndices []int, dir Direction) (string, error) {
 			fmt.Fprintln(newPatch, ` @@`)
 
 			previousIncluded := false
-			for i := hunk.Offset; i < hunk.Offset+hunk.Length && i < len(doc.Lines); /* TODO fix hunk bug and remove the len check */ i++ {
+			for i := hunk.LineStart(); i < hunk.LineEnd(); i++ {
 				line := doc.Lines[i]
 				kind := line.Kind
 
