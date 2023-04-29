@@ -34,6 +34,7 @@ func (w *Window[T]) SetData(data []T) {
 	if w.size > len(data) {
 		w.size = len(data)
 	}
+	w.setStart(w.start)
 }
 
 func (w *Window[T]) Size() int {
