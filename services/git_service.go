@@ -61,7 +61,7 @@ func (gs *GitService) ApplyPatch(patchContents string, dir patch.Direction) erro
 	return b.Run()
 }
 
-type gitExecBuilder struct {
+type GitExecBuilder struct {
 	gs *GitService
 
 	stdin      io.Reader
@@ -70,8 +70,8 @@ type gitExecBuilder struct {
 	args       []string
 }
 
-func (gs *GitService) Exec(name string) *gitExecBuilder {
-	return &gitExecBuilder{
+func (gs *GitService) Exec(name string) *GitExecBuilder {
+	return &GitExecBuilder{
 		gs: gs,
 
 		updateRepo: true,
@@ -80,27 +80,27 @@ func (gs *GitService) Exec(name string) *gitExecBuilder {
 	}
 }
 
-func (eb *gitExecBuilder) WithStdin(r io.Reader) *gitExecBuilder {
+func (eb *GitExecBuilder) WithStdin(r io.Reader) *GitExecBuilder {
 	eb.stdin = r
 	return eb
 }
 
-func (eb *gitExecBuilder) SkipUpdate() *gitExecBuilder {
+func (eb *GitExecBuilder) SkipUpdate() *GitExecBuilder {
 	eb.updateRepo = false
 	return eb
 }
 
-func (eb *gitExecBuilder) SkipCapture() *gitExecBuilder {
+func (eb *GitExecBuilder) SkipCapture() *GitExecBuilder {
 	eb.capture = false
 	return eb
 }
 
-func (eb *gitExecBuilder) WithArgs(a ...string) *gitExecBuilder {
+func (eb *GitExecBuilder) WithArgs(a ...string) *GitExecBuilder {
 	eb.args = append(eb.args, a...)
 	return eb
 }
 
-func (eb *gitExecBuilder) Run() error {
+func (eb *GitExecBuilder) Run() error {
 	cmd := exec.Command(eb.gs.env.pathToGit, eb.args...)
 
 	cmd.Dir = eb.gs.repo.Workdir()
