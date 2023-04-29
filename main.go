@@ -55,7 +55,7 @@ func main() {
 		panic(`failed to initialize logging: ` + err.Error())
 	}
 
-	gitEnv, err := services.NewGitEnvironment(`/home/connor/src/go-istage`, ``)
+	gitEnv, err := services.NewGitEnvironment(``, ``)
 	if err != nil {
 		log.Fatalln(err)
 	}
