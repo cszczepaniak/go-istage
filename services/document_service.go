@@ -1,9 +1,6 @@
 package services
 
 import (
-	"errors"
-
-	"github.com/cszczepaniak/go-istage/logging"
 	"github.com/cszczepaniak/go-istage/patch"
 	git "github.com/libgit2/git2go/v34"
 )
@@ -15,8 +12,6 @@ type DocumentService struct {
 	viewStage    bool
 	fullFileDiff bool
 	contextLines int
-
-	Document patch.Document
 }
 
 func NewDocumentService(gs *GitService) (*DocumentService, error) {
@@ -25,18 +20,6 @@ func NewDocumentService(gs *GitService) (*DocumentService, error) {
 		viewFiles:    false, // TODO support these
 		viewStage:    false,
 		fullFileDiff: false, // TODO support these
-	}
-
-	ds.gs.OnRepoChanged(func() {
-		err := ds.UpdateDocument()
-		if err != nil {
-			logging.Error(`update document failed`, `err`, err)
-		}
-	})
-
-	err := ds.UpdateDocument()
-	if err != nil {
-		return nil, err
 	}
 
 	return ds, nil
@@ -50,24 +33,22 @@ func (ds *DocumentService) ViewStage() bool {
 	return ds.viewStage
 }
 
-func (ds *DocumentService) UpdateDocument() error {
-	var changes []string
-	var err error
-	if ds.viewStage {
-		changes, err = ds.stagedChanges()
-	} else {
-		changes, err = ds.unstagedChanges()
-	}
+func (ds *DocumentService) StagedChanges() (patch.Document, error) {
+	changes, err := ds.stagedChanges()
 	if err != nil {
-		return err
+		return patch.Document{}, err
 	}
 
-	if ds.viewFiles {
-		return errors.New(`UpdateDocument: viewFiles unimplemented`)
+	return patch.ParseDocument(changes), nil
+}
+
+func (ds *DocumentService) UnstagedChanges() (patch.Document, error) {
+	changes, err := ds.unstagedChanges()
+	if err != nil {
+		return patch.Document{}, err
 	}
 
-	ds.Document = patch.ParseDocument(changes)
-	return nil
+	return patch.ParseDocument(changes), nil
 }
 
 func (ds *DocumentService) unstagedChanges() ([]string, error) {
