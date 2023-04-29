@@ -2,20 +2,24 @@ package services
 
 import (
 	"github.com/cszczepaniak/go-istage/patch"
-	git "github.com/libgit2/git2go/v34"
 )
 
+type gitClient interface {
+	StagedChanges() ([]string, error)
+	UnstagedChanges() ([]string, error)
+}
+
 type DocumentService struct {
-	gs *GitService
+	gc gitClient
 
 	viewFiles    bool
 	viewStage    bool
 	fullFileDiff bool
 }
 
-func NewDocumentService(gs *GitService) (*DocumentService, error) {
+func NewDocumentService(gc gitClient) (*DocumentService, error) {
 	ds := &DocumentService{
-		gs:           gs,
+		gc:           gc,
 		viewFiles:    false, // TODO support these
 		viewStage:    false,
 		fullFileDiff: false, // TODO support these
@@ -33,7 +37,7 @@ func (ds *DocumentService) ViewStage() bool {
 }
 
 func (ds *DocumentService) StagedChanges() (patch.Document, error) {
-	changes, err := ds.stagedChanges()
+	changes, err := ds.gc.StagedChanges()
 	if err != nil {
 		return patch.Document{}, err
 	}
@@ -42,97 +46,10 @@ func (ds *DocumentService) StagedChanges() (patch.Document, error) {
 }
 
 func (ds *DocumentService) UnstagedChanges() (patch.Document, error) {
-	changes, err := ds.unstagedChanges()
+	changes, err := ds.gc.UnstagedChanges()
 	if err != nil {
 		return patch.Document{}, err
 	}
 
 	return patch.ParseDocument(changes), nil
-}
-
-func (ds *DocumentService) unstagedChanges() ([]string, error) {
-	opts, err := git.DefaultDiffOptions()
-	if err != nil {
-		return nil, err
-	}
-	opts.Flags |= git.DiffShowUntrackedContent
-	opts.Flags |= git.DiffRecurseUntracked
-
-	diff, err := ds.gs.repo.DiffIndexToWorkdir(nil, &opts)
-	if err != nil {
-		return nil, err
-	}
-
-	ndl, err := diff.NumDeltas()
-	if err != nil {
-		return nil, err
-	}
-
-	res := make([]string, 0, ndl)
-	for i := 0; i < ndl; i++ {
-		p, err := diff.Patch(i)
-		if err != nil {
-			return nil, err
-		}
-
-		txt, err := p.String()
-		if err != nil {
-			return nil, err
-		}
-
-		if txt != `` {
-			res = append(res, txt)
-		}
-	}
-
-	return res, nil
-}
-
-func (ds *DocumentService) stagedChanges() ([]string, error) {
-	opts, err := git.DefaultDiffOptions()
-	if err != nil {
-		return nil, err
-	}
-
-	headRef, err := ds.gs.repo.Head()
-	if err != nil {
-		return nil, err
-	}
-	commit, err := ds.gs.repo.LookupCommit(headRef.Target())
-	if err != nil {
-		return nil, err
-	}
-	tree, err := commit.Tree()
-	if err != nil {
-		return nil, err
-	}
-
-	diff, err := ds.gs.repo.DiffTreeToIndex(tree, nil, &opts)
-	if err != nil {
-		return nil, err
-	}
-
-	ndl, err := diff.NumDeltas()
-	if err != nil {
-		return nil, err
-	}
-
-	res := make([]string, 0, ndl)
-	for i := 0; i < ndl; i++ {
-		p, err := diff.Patch(i)
-		if err != nil {
-			return nil, err
-		}
-
-		txt, err := p.String()
-		if err != nil {
-			return nil, err
-		}
-
-		if txt != `` {
-			res = append(res, txt)
-		}
-	}
-
-	return res, nil
 }

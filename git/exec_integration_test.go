@@ -1,4 +1,4 @@
-package services
+package git
 
 import (
 	"testing"
@@ -7,10 +7,10 @@ import (
 )
 
 func TestExec(t *testing.T) {
-	env, err := NewGitEnvironment(``, ``)
+	env, err := NewEnvironment(``, ``)
 	require.NoError(t, err)
 
-	gs, err := NewGitService(env)
+	gs, err := NewClient(env)
 	require.NoError(t, err)
 
 	err = gs.Exec(`status`).Run()

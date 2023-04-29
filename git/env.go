@@ -1,4 +1,4 @@
-package services
+package git
 
 import (
 	"errors"
@@ -9,27 +9,27 @@ import (
 	git "github.com/libgit2/git2go/v34"
 )
 
-type GitEnvironment struct {
+type Environment struct {
 	repoPath  string
 	pathToGit string
 }
 
-func NewGitEnvironment(repoPath string, pathToGit string) (GitEnvironment, error) {
+func NewEnvironment(repoPath string, pathToGit string) (Environment, error) {
 	if pathToGit == `` {
 		var err error
 		pathToGit, err = resolveGitPath()
 		if err != nil {
-			return GitEnvironment{}, err
+			return Environment{}, err
 		}
 	}
 	if repoPath == `` {
 		var err error
 		repoPath, err = resolveRepoPath()
 		if err != nil {
-			return GitEnvironment{}, err
+			return Environment{}, err
 		}
 	}
-	return GitEnvironment{
+	return Environment{
 		repoPath:  repoPath,
 		pathToGit: pathToGit,
 	}, nil

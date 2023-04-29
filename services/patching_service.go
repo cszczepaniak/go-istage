@@ -4,13 +4,17 @@ import (
 	"github.com/cszczepaniak/go-istage/patch"
 )
 
-type PatchingService struct {
-	gs *GitService
+type patchClient interface {
+	ApplyPatch(string, patch.Direction) error
 }
 
-func NewPatchingService(gs *GitService) *PatchingService {
+type PatchingService struct {
+	pc patchClient
+}
+
+func NewPatchingService(pc patchClient) *PatchingService {
 	return &PatchingService{
-		gs: gs,
+		pc: pc,
 	}
 }
 
@@ -31,5 +35,5 @@ func (ps *PatchingService) ApplyPatch(dir patch.Direction, doc patch.Document, s
 		return err
 	}
 
-	return ps.gs.ApplyPatch(patch, dir)
+	return ps.pc.ApplyPatch(patch, dir)
 }

@@ -6,9 +6,9 @@ import (
 	"github.com/charmbracelet/bubbles/textarea"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+	"github.com/cszczepaniak/go-istage/git"
 	"github.com/cszczepaniak/go-istage/logging"
 	"github.com/cszczepaniak/go-istage/patch"
-	"github.com/cszczepaniak/go-istage/services"
 )
 
 func RunUI(p patcher, u docUpdater, ge gitExecer) error {
@@ -28,7 +28,7 @@ type docUpdater interface {
 }
 
 type gitExecer interface {
-	Exec(cmd string) *services.GitExecBuilder
+	Exec(cmd string) *git.GitExecBuilder
 }
 
 type view struct {

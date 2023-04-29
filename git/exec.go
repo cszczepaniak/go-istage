@@ -1,4 +1,4 @@
-package services
+package git
 
 import (
 	"bufio"
@@ -6,63 +6,10 @@ import (
 	"io"
 	"os/exec"
 	"strings"
-
-	"github.com/cszczepaniak/go-istage/patch"
-	git "github.com/libgit2/git2go/v34"
 )
 
-type GitService struct {
-	repo *git.Repository
-	env  GitEnvironment
-
-	repoChanged func()
-}
-
-func NewGitService(env GitEnvironment) (*GitService, error) {
-	gs := &GitService{
-		env: env,
-	}
-	err := gs.UpdateRepository()
-	if err != nil {
-		return nil, err
-	}
-	return gs, nil
-}
-
-func (gs *GitService) UpdateRepository() error {
-	repo, err := git.OpenRepository(gs.env.repoPath)
-	if err != nil {
-		return err
-	}
-
-	gs.repo = repo
-
-	if gs.repoChanged != nil {
-		gs.repoChanged()
-	}
-
-	return nil
-}
-
-func (gs *GitService) ApplyPatch(patchContents string, dir patch.Direction) error {
-	isUndo := dir == patch.Reset || dir == patch.Unstage
-
-	b := gs.Exec(`apply`).WithStdin(strings.NewReader(patchContents))
-
-	b.WithArgs(`-v`)
-	if dir != patch.Reset {
-		b.WithArgs(`--cached`)
-	}
-	if isUndo {
-		b.WithArgs(`--reverse`)
-	}
-	b.WithArgs(`--whitespace=nowarn`)
-
-	return b.Run()
-}
-
 type GitExecBuilder struct {
-	gs *GitService
+	gs *Client
 
 	stdin      io.Reader
 	updateRepo bool
@@ -70,7 +17,7 @@ type GitExecBuilder struct {
 	args       []string
 }
 
-func (gs *GitService) Exec(name string) *GitExecBuilder {
+func (gs *Client) Exec(name string) *GitExecBuilder {
 	return &GitExecBuilder{
 		gs: gs,
 
@@ -134,19 +81,4 @@ func (eb *GitExecBuilder) Run() error {
 		return eb.gs.UpdateRepository()
 	}
 	return nil
-}
-
-func (gs *GitService) OnRepoChanged(fn func()) {
-	if fn == nil {
-		return
-	}
-	if gs.repoChanged == nil {
-		gs.repoChanged = fn
-		return
-	}
-	old := gs.repoChanged
-	gs.repoChanged = func() {
-		fn()
-		old()
-	}
 }

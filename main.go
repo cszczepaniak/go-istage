@@ -5,6 +5,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/cszczepaniak/go-istage/git"
 	"github.com/cszczepaniak/go-istage/logging"
 	"github.com/cszczepaniak/go-istage/services"
 	"github.com/cszczepaniak/go-istage/ui"
@@ -54,12 +55,12 @@ func main() {
 		panic(`failed to initialize logging: ` + err.Error())
 	}
 
-	gitEnv, err := services.NewGitEnvironment(``, ``)
+	gitEnv, err := git.NewEnvironment(``, ``)
 	if err != nil {
 		logging.Error(`failed to initialize git env`, `err`, err)
 	}
 
-	gs, err := services.NewGitService(gitEnv)
+	gs, err := git.NewClient(gitEnv)
 	if err != nil {
 		logging.Error(`failed to initialize git service`, `err`, err)
 	}
