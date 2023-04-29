@@ -1,9 +1,8 @@
 package ui
 
 import (
-	"log"
-
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/cszczepaniak/go-istage/logging"
 	"github.com/cszczepaniak/go-istage/patch"
 )
 
@@ -11,7 +10,7 @@ func (v view) stageLine() tea.Msg {
 	lineIdx := v.window.AbsoluteIndex(v.cursorLine)
 	err := v.patcher.ApplyPatch(patch.Stage, false, []int{lineIdx})
 	if err != nil {
-		log.Println(`ERROR:`, err)
+		logging.Error(`stageLine failed`, `err`, err)
 		return err
 	}
 	return refreshMsg{}
@@ -21,7 +20,7 @@ func (v view) stageHunk() tea.Msg {
 	lineIdx := v.window.AbsoluteIndex(v.cursorLine)
 	h, ok := v.updater.FindHunk(lineIdx)
 	if !ok {
-		log.Println(`WARN:`, `hunk not found at index`, lineIdx)
+		logging.Warn(`stageHunk hunk not found`, `index`, lineIdx)
 		return nil
 	}
 
@@ -35,7 +34,7 @@ func (v view) stageHunk() tea.Msg {
 
 	err := v.patcher.ApplyPatch(patch.Stage, false, lines)
 	if err != nil {
-		log.Println(`ERROR:`, err)
+		logging.Error(`stageHunk failed`, `err`, err)
 		return err
 	}
 	return refreshMsg{}
@@ -45,7 +44,7 @@ func (v view) unstageLine() tea.Msg {
 	lineIdx := v.window.AbsoluteIndex(v.cursorLine)
 	err := v.patcher.ApplyPatch(patch.Unstage, false, []int{lineIdx})
 	if err != nil {
-		log.Println(`ERROR:`, err)
+		logging.Error(`unstageLine failed`, `err`, err)
 		return err
 	}
 	return refreshMsg{}
@@ -55,7 +54,7 @@ func (v view) unstageHunk() tea.Msg {
 	lineIdx := v.window.AbsoluteIndex(v.cursorLine)
 	h, ok := v.updater.FindHunk(lineIdx)
 	if !ok {
-		log.Println(`WARN:`, `hunk not found at index`, lineIdx)
+		logging.Warn(`unstageHunk hunk not found`, `index`, lineIdx)
 		return nil
 	}
 
@@ -69,7 +68,7 @@ func (v view) unstageHunk() tea.Msg {
 
 	err := v.patcher.ApplyPatch(patch.Unstage, false, lines)
 	if err != nil {
-		log.Println(`ERROR:`, err)
+		logging.Error(`unstageHunk failed`, `err`, err)
 		return err
 	}
 	return refreshMsg{}
@@ -78,7 +77,7 @@ func (v view) unstageHunk() tea.Msg {
 func (v view) updateDoc() tea.Msg {
 	doc, err := v.updater.UpdateDocument()
 	if err != nil {
-		log.Println(`ERROR:`, err)
+		logging.Error(`updateDoc failed`, `err`, err)
 		return err
 	}
 	return docMsg{d: doc}

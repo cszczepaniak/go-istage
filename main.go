@@ -6,6 +6,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/cszczepaniak/go-istage/logging"
 	"github.com/cszczepaniak/go-istage/patch"
 	"github.com/cszczepaniak/go-istage/services"
 	"github.com/cszczepaniak/go-istage/ui"
@@ -53,6 +54,11 @@ func main() {
 	flag.TextVar(&linesArg, `lines`, &lines{}, ``)
 
 	flag.Parse()
+
+	err := logging.Init()
+	if err != nil {
+		panic(`failed to initialize logging: ` + err.Error())
+	}
 
 	gitEnv, err := services.NewGitEnvironment(`/home/connor/src/go-istage`, ``)
 	if err != nil {

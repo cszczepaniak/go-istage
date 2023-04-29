@@ -2,8 +2,8 @@ package services
 
 import (
 	"errors"
-	"log"
 
+	"github.com/cszczepaniak/go-istage/logging"
 	"github.com/cszczepaniak/go-istage/patch"
 	git "github.com/libgit2/git2go/v34"
 )
@@ -30,7 +30,7 @@ func NewDocumentService(gs *GitService) (*DocumentService, error) {
 	ds.gs.OnRepoChanged(func() {
 		err := ds.UpdateDocument()
 		if err != nil {
-			log.Println("ERROR: update document failed:", err)
+			logging.Error(`update document failed`, `err`, err)
 		}
 	})
 

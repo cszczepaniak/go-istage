@@ -1,25 +1,19 @@
 package ui
 
 import (
-	"log"
 	"strings"
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+	"github.com/cszczepaniak/go-istage/logging"
 	"github.com/cszczepaniak/go-istage/patch"
 	"github.com/cszczepaniak/go-istage/window"
 )
 
 func RunUI(doc patch.Document, p patcher, u docUpdater) error {
-	f, err := tea.LogToFile(`log/debug.log`, `[LOG] `)
-	if err != nil {
-		return err
-	}
-	defer f.Close()
-
 	v := newView(doc, p, u)
 	prog := tea.NewProgram(v)
-	_, err = prog.Run()
+	_, err := prog.Run()
 	return err
 }
 
@@ -90,7 +84,6 @@ func (v view) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return v, v.cursorRight
 		case "t":
 			v.updater.ToggleView()
-			log.Println(`toggled view stage:`, v.updater.ViewStage())
 			return v, v.updateDoc
 		case "s":
 			if !v.updater.ViewStage() {
@@ -128,7 +121,7 @@ func (v view) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		v.window = window.NewWindow(msg.d.Lines, v.h)
 		v.window.JumpTo(curr.StartIndex)
 	case error:
-		log.Println(`ERROR:`, msg)
+		logging.Error(`update.error`, `err`, msg)
 		return v, tea.Quit
 	}
 
