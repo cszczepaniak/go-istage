@@ -17,7 +17,7 @@ func (v view) stageLine() tea.Msg {
 	err := v.patcher.ApplyPatch(
 		patch.Stage,
 		v.currentView().doc,
-		[]int{v.stagedView.currentLine()},
+		[]int{v.currentView().currentLine()},
 	)
 	if err != nil {
 		logging.Error(`stageLine failed`, `err`, err)
@@ -57,7 +57,7 @@ func (v view) unstageLine() tea.Msg {
 	err := v.patcher.ApplyPatch(
 		patch.Unstage,
 		v.currentView().doc,
-		[]int{v.stagedView.currentLine()},
+		[]int{v.currentView().currentLine()},
 	)
 	if err != nil {
 		logging.Error(`unstageLine failed`, `err`, err)
