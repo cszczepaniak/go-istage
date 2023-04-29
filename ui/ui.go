@@ -95,8 +95,6 @@ func (v view) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				return v, v.unstageHunk
 			}
 		}
-	case windowScrollUpMsg, windowScrollDownMsg, jumpToDocLineIndexMsg:
-		v.currentView().update(msg)
 	case refreshMsg:
 		return v, v.updateDocs(v.viewStage)
 	case docMsg:

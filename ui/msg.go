@@ -12,6 +12,3 @@ type docMsg struct {
 type jumpToDocLineIndexMsg struct {
 	index int
 }
-
-type windowScrollDownMsg struct{}
-type windowScrollUpMsg struct{}

@@ -82,10 +82,6 @@ func (dv *documentView) update(msg tea.Msg) {
 		case "right":
 			dv.cursorRight()
 		}
-	case windowScrollUpMsg:
-		dv.w.ScrollUp()
-	case windowScrollDownMsg:
-		dv.w.ScrollDown()
 	case jumpToDocLineIndexMsg:
 		relIndex := dv.w.RelativeIndex(msg.index)
 		if relIndex < 0 {
