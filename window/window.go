@@ -33,17 +33,20 @@ func (w *Window[T]) Resize(newSize int) {
 
 func (w *Window[T]) SetData(data []T) {
 	w.values = data
+	if w.size > len(data) {
+		w.size = len(data)
+	}
 }
 
 func (w *Window[T]) Size() int {
 	return w.size
 }
 
-func (w *Window[T]) AbsoluteIndex(windowIndex int) int {
-	if windowIndex >= w.size {
-		windowIndex = w.size - 1
+func (w *Window[T]) AbsoluteIndex(relIndex int) int {
+	if relIndex >= w.size {
+		relIndex = w.size - 1
 	}
-	return w.start + windowIndex
+	return w.start + relIndex
 }
 
 func (w *Window[T]) RelativeIndex(absIndex int) int {
@@ -80,8 +83,8 @@ func (w *Window[T]) JumpTo(absIndex int) {
 	w.start = absIndex
 }
 
-func (w *Window[T]) ContainsAbsoluteIndex(sourceIndex int) bool {
-	return sourceIndex >= w.start && sourceIndex < w.end()
+func (w *Window[T]) ContainsAbsoluteIndex(absIndex int) bool {
+	return absIndex >= w.start && absIndex < w.end()
 }
 
 func (w *Window[T]) end() int {
