@@ -71,10 +71,14 @@ func (v view) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		switch msg.String() {
 		case "ctrl+c", "q":
 			return v, tea.Quit
-		case "up", "down", "left", "right":
-			if v.currentView() != nil {
-				v.currentView().update(msg)
-			}
+		case "up":
+			v.currentView().navigate(navigateUp)
+		case "down":
+			v.currentView().navigate(navigateDown)
+		case "left":
+			v.currentView().navigate(navigateLeft)
+		case "right":
+			v.currentView().navigate(navigateRight)
 		case "t":
 			v.viewStage = !v.viewStage
 			return v, v.updateDocs(v.viewStage)

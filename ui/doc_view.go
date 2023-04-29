@@ -3,7 +3,6 @@ package ui
 import (
 	"strings"
 
-	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/cszczepaniak/go-istage/logging"
 	"github.com/cszczepaniak/go-istage/patch"
@@ -61,34 +60,37 @@ func (dv *documentView) view() string {
 	return sb.String()
 }
 
-func (dv *documentView) update(msg tea.Msg) {
-	switch msg := msg.(type) {
-	case tea.KeyMsg:
-		switch msg.String() {
-		case "up":
-			if dv.cursor == 0 {
-				dv.w.ScrollUp()
-			} else {
-				dv.cursor--
-			}
-		case "down":
-			if dv.cursor == dv.w.Size()-1 {
-				dv.w.ScrollDown()
-			} else {
-				dv.cursor++
-			}
-		case "left":
-			dv.cursorLeft()
-		case "right":
-			dv.cursorRight()
+type navigationDirection int
+
+const (
+	navigateUp navigationDirection = iota
+	navigateDown
+	navigateLeft
+	navigateRight
+)
+
+func (dv *documentView) navigate(dir navigationDirection) {
+	if dv == nil {
+		return
+	}
+
+	switch dir {
+	case navigateUp:
+		if dv.cursor == 0 {
+			dv.w.ScrollUp()
+		} else {
+			dv.cursor--
 		}
-	case jumpToDocLineIndexMsg:
-		relIndex := dv.w.RelativeIndex(msg.index)
-		if relIndex < 0 {
-			dv.w.JumpTo(msg.index)
-			relIndex = dv.w.RelativeIndex(msg.index)
+	case navigateDown:
+		if dv.cursor == dv.w.Size()-1 {
+			dv.w.ScrollDown()
+		} else {
+			dv.cursor++
 		}
-		dv.cursor = relIndex
+	case navigateLeft:
+		dv.cursorLeft()
+	case navigateRight:
+		dv.cursorRight()
 	}
 }
 

@@ -8,7 +8,3 @@ type docMsg struct {
 	staged bool
 	d      patch.Document
 }
-
-type jumpToDocLineIndexMsg struct {
-	index int
-}

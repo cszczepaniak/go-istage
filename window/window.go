@@ -1,5 +1,7 @@
 package window
 
+import "fmt"
+
 type Window[T any] struct {
 	values []T
 	size   int
@@ -63,16 +65,19 @@ func (w *Window[T]) ScrollDown() {
 		return
 	}
 	w.start++
+	if w.start > w.maxStart() {
+		w.start = w.maxStart()
+	}
 }
 
-func (w *Window[T]) JumpTo(sourceIndex int) {
-	if sourceIndex < 0 {
+func (w *Window[T]) JumpTo(absIndex int) {
+	if absIndex < 0 {
 		panic(`Window.JumpTo: negative sourceIndex`)
 	}
-	if sourceIndex > w.maxStart() {
-		sourceIndex = w.maxStart()
+	if absIndex > w.maxStart() {
+		absIndex = w.maxStart()
 	}
-	w.start = sourceIndex
+	w.start = absIndex
 }
 
 func (w *Window[T]) ContainsAbsoluteIndex(sourceIndex int) bool {
@@ -84,6 +89,9 @@ func (w *Window[T]) end() int {
 }
 
 func (w *Window[T]) maxStart() int {
+	if w.size > len(w.values) {
+		return 0
+	}
 	return len(w.values) - w.size
 }
 
@@ -96,6 +104,10 @@ func (w *Window[T]) CurrentValues() Values[T] {
 	end := w.end()
 	if end > len(w.values) {
 		end = len(w.values)
+	}
+
+	if w.start > w.maxStart() {
+		panic(fmt.Sprintf(`CurrentValues: start should never be able to exceed max start (curr: %d, max: %d)`, w.start, w.maxStart()))
 	}
 
 	return Values[T]{
