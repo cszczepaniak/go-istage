@@ -26,9 +26,7 @@ func (w *Window[T]) Resize(newSize int) {
 		newSize = len(w.values)
 	}
 	w.size = newSize
-	if w.start > w.maxStart() {
-		w.start = w.maxStart()
-	}
+	w.setStart(w.start)
 }
 
 func (w *Window[T]) SetData(data []T) {
@@ -67,20 +65,14 @@ func (w *Window[T]) ScrollDown() {
 	if w.end() >= len(w.values) {
 		return
 	}
-	w.start++
-	if w.start > w.maxStart() {
-		w.start = w.maxStart()
-	}
+	w.setStart(w.start + 1)
 }
 
 func (w *Window[T]) JumpTo(absIndex int) {
 	if absIndex < 0 {
-		panic(`Window.JumpTo: negative sourceIndex`)
+		panic(`Window.JumpTo: negative index`)
 	}
-	if absIndex > w.maxStart() {
-		absIndex = w.maxStart()
-	}
-	w.start = absIndex
+	w.setStart(absIndex)
 }
 
 func (w *Window[T]) ContainsAbsoluteIndex(absIndex int) bool {
@@ -96,6 +88,13 @@ func (w *Window[T]) maxStart() int {
 		return 0
 	}
 	return len(w.values) - w.size
+}
+
+func (w *Window[T]) setStart(val int) {
+	w.start = val
+	if w.start > w.maxStart() {
+		w.start = w.maxStart()
+	}
 }
 
 type Values[T any] struct {
