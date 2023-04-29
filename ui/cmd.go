@@ -1,6 +1,9 @@
 package ui
 
 import (
+	"fmt"
+	"runtime/debug"
+
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/cszczepaniak/go-istage/logging"
 	"github.com/cszczepaniak/go-istage/patch"
@@ -16,7 +19,13 @@ func (v view) stageLine() tea.Msg {
 	return refreshMsg{}
 }
 
-func (v view) stageHunk() tea.Msg {
+func (v view) stageHunk() (msg tea.Msg) {
+	defer func() {
+		if r := recover(); r != nil {
+			msg = fmt.Errorf("panic recovered: %+v\n%s", r, debug.Stack())
+		}
+	}()
+
 	lineIdx := v.window.AbsoluteIndex(v.cursorLine)
 	h, ok := v.updater.FindHunk(lineIdx)
 	if !ok {
@@ -50,7 +59,13 @@ func (v view) unstageLine() tea.Msg {
 	return refreshMsg{}
 }
 
-func (v view) unstageHunk() tea.Msg {
+func (v view) unstageHunk() (msg tea.Msg) {
+	defer func() {
+		if r := recover(); r != nil {
+			msg = fmt.Errorf("panic recovered: %+v\n%s", r, debug.Stack())
+		}
+	}()
+
 	lineIdx := v.window.AbsoluteIndex(v.cursorLine)
 	h, ok := v.updater.FindHunk(lineIdx)
 	if !ok {
