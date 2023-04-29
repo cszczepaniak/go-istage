@@ -100,6 +100,8 @@ func (v view) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 		case "r":
 			return v, v.revertLine
+		case "R":
+			return v, v.revertHunk
 		}
 	case refreshMsg:
 		return v, v.updateDocs(v.viewStage)
