@@ -35,6 +35,11 @@ func ChangesFromHeader(header []Line) Changes {
 			continue
 		}
 
+		if strings.HasPrefix(l.Text, `deleted file mode `) {
+			ch.OldMode = strings.TrimPrefix(l.Text, `deleted file mode `)
+			continue
+		}
+
 		if strings.HasPrefix(l.Text, `--- a/`) && !strings.Contains(l.Text, `/dev/null`) {
 			ch.OldPath = strings.TrimPrefix(l.Text, `--- a/`)
 			continue
