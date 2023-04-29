@@ -2,7 +2,6 @@ package main
 
 import (
 	"flag"
-	"log"
 	"strconv"
 	"strings"
 
@@ -57,28 +56,23 @@ func main() {
 
 	gitEnv, err := services.NewGitEnvironment(``, ``)
 	if err != nil {
-		log.Fatalln(err)
+		logging.Error(`failed to initialize git env`, `err`, err)
 	}
 
 	gs, err := services.NewGitService(gitEnv)
 	if err != nil {
-		log.Fatalln(err)
+		logging.Error(`failed to initialize git service`, `err`, err)
 	}
 
 	ds, err := services.NewDocumentService(gs)
 	if err != nil {
-		log.Fatalln(err)
+		logging.Error(`failed to initialize document service`, `err`, err)
 	}
 
 	ps := services.NewPatchingService(gs)
 
-	doc, err := ds.UnstagedChanges()
+	err = ui.RunUI(ps, ds)
 	if err != nil {
-		log.Fatalln(err)
-	}
-
-	err = ui.RunUI(doc, ps, ds)
-	if err != nil {
-		log.Fatalln(err)
+		logging.Error(`error during UI runtime`, `err`, err)
 	}
 }

@@ -10,8 +10,15 @@ import (
 )
 
 func (v view) stageLine() tea.Msg {
-	lineIdx := v.window.AbsoluteIndex(v.cursorLine)
-	err := v.patcher.ApplyPatch(patch.Stage, v.unstaged, []int{lineIdx})
+	if v.viewStage {
+		return nil
+	}
+
+	err := v.patcher.ApplyPatch(
+		patch.Stage,
+		v.currentView().doc,
+		[]int{v.stagedView.currentLine()},
+	)
 	if err != nil {
 		logging.Error(`stageLine failed`, `err`, err)
 		return err
@@ -26,22 +33,15 @@ func (v view) stageHunk() (msg tea.Msg) {
 		}
 	}()
 
-	lineIdx := v.window.AbsoluteIndex(v.cursorLine)
-	h, ok := findHunk(v.unstaged, lineIdx)
-	if !ok {
-		logging.Warn(`stageHunk hunk not found`, `index`, lineIdx)
+	if v.viewStage {
 		return nil
 	}
 
-	var lines []int
-	for l := h.LineStart(); l < h.LineEnd(); l++ {
-		dl := v.unstaged.Lines[l]
-		if dl.Kind.IsAdditionOrRemoval() {
-			lines = append(lines, l)
-		}
-	}
-
-	err := v.patcher.ApplyPatch(patch.Stage, v.unstaged, lines)
+	err := v.patcher.ApplyPatch(
+		patch.Stage,
+		v.currentView().doc,
+		v.currentView().linesInCurrentHunk(),
+	)
 	if err != nil {
 		logging.Error(`stageHunk failed`, `err`, err)
 		return err
@@ -50,8 +50,15 @@ func (v view) stageHunk() (msg tea.Msg) {
 }
 
 func (v view) unstageLine() tea.Msg {
-	lineIdx := v.window.AbsoluteIndex(v.cursorLine)
-	err := v.patcher.ApplyPatch(patch.Unstage, v.staged, []int{lineIdx})
+	if !v.viewStage {
+		return nil
+	}
+
+	err := v.patcher.ApplyPatch(
+		patch.Unstage,
+		v.currentView().doc,
+		[]int{v.stagedView.currentLine()},
+	)
 	if err != nil {
 		logging.Error(`unstageLine failed`, `err`, err)
 		return err
@@ -66,36 +73,20 @@ func (v view) unstageHunk() (msg tea.Msg) {
 		}
 	}()
 
-	lineIdx := v.window.AbsoluteIndex(v.cursorLine)
-	h, ok := findHunk(v.staged, lineIdx)
-	if !ok {
-		logging.Warn(`unstageHunk hunk not found`, `index`, lineIdx)
+	if !v.viewStage {
 		return nil
 	}
 
-	var lines []int
-	for l := h.LineStart(); l < h.LineEnd(); l++ {
-		dl := v.staged.Lines[l]
-		if dl.Kind.IsAdditionOrRemoval() {
-			lines = append(lines, l)
-		}
-	}
-
-	err := v.patcher.ApplyPatch(patch.Unstage, v.staged, lines)
+	err := v.patcher.ApplyPatch(
+		patch.Unstage,
+		v.currentView().doc,
+		v.currentView().linesInCurrentHunk(),
+	)
 	if err != nil {
 		logging.Error(`unstageHunk failed`, `err`, err)
 		return err
 	}
 	return refreshMsg{}
-}
-
-func findHunk(doc patch.Document, idx int) (patch.Hunk, bool) {
-	e, ok := doc.FindEntry(idx)
-	if !ok {
-		return patch.Hunk{}, false
-	}
-
-	return e.FindHunk(idx)
 }
 
 func (v view) updateDocs(staged bool) tea.Cmd {
@@ -113,39 +104,6 @@ func (v view) updateDocs(staged bool) tea.Cmd {
 			return err
 		}
 
-		return docMsg{d: doc}
+		return docMsg{d: doc, staged: staged}
 	}
-}
-
-func (v view) cursorLeft() tea.Msg {
-	start := v.window.AbsoluteIndex(v.cursorLine)
-	if start <= 0 {
-		return nil
-	}
-
-	for i := start - 1; i >= 0; i-- {
-		l := v.currentDoc().Lines[i]
-		if l.Kind == patch.HunkLine {
-			return jumpToDocLineIndexMsg{
-				index: i,
-			}
-		}
-	}
-	return jumpToDocLineIndexMsg{index: 0}
-}
-
-func (v view) cursorRight() tea.Msg {
-	start := v.window.AbsoluteIndex(v.cursorLine)
-	if start >= len(v.currentDoc().Lines)-1 {
-		return nil
-	}
-	for i := start + 1; i < len(v.currentDoc().Lines); i++ {
-		l := v.currentDoc().Lines[i]
-		if l.Kind == patch.HunkLine {
-			return jumpToDocLineIndexMsg{
-				index: i,
-			}
-		}
-	}
-	return jumpToDocLineIndexMsg{index: len(v.currentDoc().Lines) - 1}
 }

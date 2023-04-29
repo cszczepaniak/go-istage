@@ -29,6 +29,10 @@ func (w *Window[T]) Resize(newSize int) {
 	}
 }
 
+func (w *Window[T]) SetData(data []T) {
+	w.values = data
+}
+
 func (w *Window[T]) Size() int {
 	return w.size
 }

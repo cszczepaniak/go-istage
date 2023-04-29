@@ -5,7 +5,8 @@ import "github.com/cszczepaniak/go-istage/patch"
 type refreshMsg struct{}
 
 type docMsg struct {
-	d patch.Document
+	staged bool
+	d      patch.Document
 }
 
 type jumpToDocLineIndexMsg struct {

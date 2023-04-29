@@ -1,17 +1,14 @@
 package ui
 
 import (
-	"strings"
-
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/cszczepaniak/go-istage/logging"
 	"github.com/cszczepaniak/go-istage/patch"
-	"github.com/cszczepaniak/go-istage/window"
 )
 
-func RunUI(doc patch.Document, p patcher, u docUpdater) error {
-	v := newView(doc, p, u)
+func RunUI(p patcher, u docUpdater) error {
+	v := newView(p, u)
 	prog := tea.NewProgram(v)
 	_, err := prog.Run()
 	return err
@@ -30,29 +27,25 @@ type view struct {
 	patcher patcher
 	updater docUpdater
 
-	viewStage bool
-	staged    patch.Document
-	unstaged  patch.Document
+	viewStage    bool
+	stagedView   *documentView
+	unstagedView *documentView
 
-	cursorLine int
-	h, w       int
-
-	window *window.Window[patch.Line]
+	h, w int
 }
 
-func newView(doc patch.Document, p patcher, u docUpdater) view {
+func newView(p patcher, u docUpdater) view {
 	return view{
 		patcher: p,
 		updater: u,
-		window:  window.NewWindow(doc.Lines, 0),
 	}
 }
 
-func (v view) currentDoc() patch.Document {
+func (v view) currentView() *documentView {
 	if v.viewStage {
-		return v.staged
+		return v.stagedView
 	}
-	return v.unstaged
+	return v.unstagedView
 }
 
 func (v view) Init() tea.Cmd {
@@ -68,27 +61,20 @@ func (v view) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		v.h = msg.Height - 1
 		v.w = msg.Width
 
-		v.window.Resize(msg.Height - 1)
+		if v.stagedView != nil {
+			v.stagedView.resize(v.h)
+		}
+		if v.unstagedView != nil {
+			v.unstagedView.resize(v.h)
+		}
 	case tea.KeyMsg:
 		switch msg.String() {
 		case "ctrl+c", "q":
 			return v, tea.Quit
-		case "up":
-			if v.cursorLine == 0 {
-				v.window.ScrollUp()
-			} else {
-				v.cursorLine--
+		case "up", "down", "left", "right":
+			if v.currentView() != nil {
+				v.currentView().update(msg)
 			}
-		case "down":
-			if v.cursorLine == v.window.Size()-1 {
-				v.window.ScrollDown()
-			} else {
-				v.cursorLine++
-			}
-		case "left":
-			return v, v.cursorLeft
-		case "right":
-			return v, v.cursorRight
 		case "t":
 			v.viewStage = !v.viewStage
 			return v, v.updateDocs(v.viewStage)
@@ -109,29 +95,20 @@ func (v view) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				return v, v.unstageHunk
 			}
 		}
-	case windowScrollUpMsg:
-		v.window.ScrollUp()
-	case windowScrollDownMsg:
-		v.window.ScrollDown()
-	case jumpToDocLineIndexMsg:
-		relIndex := v.window.RelativeIndex(msg.index)
-		if relIndex < 0 {
-			v.window.JumpTo(msg.index)
-			relIndex = v.window.RelativeIndex(msg.index)
-		}
-		v.cursorLine = relIndex
+	case windowScrollUpMsg, windowScrollDownMsg, jumpToDocLineIndexMsg:
+		v.currentView().update(msg)
 	case refreshMsg:
 		return v, v.updateDocs(v.viewStage)
 	case docMsg:
-		if v.viewStage {
-			v.staged = msg.d
-		} else {
-			v.unstaged = msg.d
+		if msg.staged && v.stagedView == nil {
+			v.stagedView = newDocumentView(msg.d, v.h)
+		} else if !msg.staged && v.unstagedView == nil {
+			v.unstagedView = newDocumentView(msg.d, v.h)
 		}
 
-		curr := v.window.CurrentValues()
-		v.window = window.NewWindow(msg.d.Lines, v.h)
-		v.window.JumpTo(curr.StartIndex)
+		if v.currentView() != nil {
+			v.currentView().setDoc(msg.d, v.h)
+		}
 	case error:
 		logging.Error(`update.error`, `err`, msg)
 		return v, tea.Quit
@@ -150,22 +127,5 @@ var kindToColor = map[patch.LineKind]lipgloss.Style{
 var selectedStyle = lipgloss.NewStyle().Background(lipgloss.Color(`#555555`))
 
 func (v view) View() string {
-	sb := &strings.Builder{}
-
-	viewableLines := v.window.CurrentValues()
-
-	for i, l := range viewableLines.Values {
-		s := lipgloss.NewStyle()
-		c, ok := kindToColor[l.Kind]
-		if ok {
-			s = s.Inherit(c)
-		}
-		if v.cursorLine == i {
-			s = s.Inherit(selectedStyle)
-		}
-
-		sb.WriteString(s.Render(l.Text))
-		sb.WriteString(l.LineBreak)
-	}
-	return sb.String()
+	return v.currentView().view()
 }
