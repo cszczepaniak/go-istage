@@ -2,14 +2,18 @@ package git
 
 import (
 	"bufio"
+	"errors"
 	"fmt"
 	"io"
 	"os/exec"
 	"strings"
+
+	git "github.com/libgit2/git2go/v34"
 )
 
 type GitExecBuilder struct {
-	gs *Client
+	env  Environment
+	repo *git.Repository
 
 	stdin      io.Reader
 	updateRepo bool
@@ -19,7 +23,19 @@ type GitExecBuilder struct {
 
 func (gs *Client) Exec(name string) *GitExecBuilder {
 	return &GitExecBuilder{
-		gs: gs,
+		env:  gs.env,
+		repo: gs.repo,
+
+		updateRepo: true,
+		capture:    true,
+		args:       []string{name},
+	}
+}
+
+func (e Environment) Exec(repo *git.Repository, name string) *GitExecBuilder {
+	return &GitExecBuilder{
+		env:  e,
+		repo: repo,
 
 		updateRepo: true,
 		capture:    true,
@@ -48,9 +64,9 @@ func (eb *GitExecBuilder) WithArgs(a ...string) *GitExecBuilder {
 }
 
 func (eb *GitExecBuilder) Run() error {
-	cmd := exec.Command(eb.gs.env.pathToGit, eb.args...)
+	cmd := exec.Command(eb.env.pathToGit, eb.args...)
 
-	cmd.Dir = eb.gs.repo.Workdir()
+	cmd.Dir = eb.repo.Workdir()
 
 	var out strings.Builder
 	if eb.capture {
@@ -78,7 +94,15 @@ func (eb *GitExecBuilder) Run() error {
 	}
 
 	if eb.updateRepo {
-		return eb.gs.UpdateRepository()
+		repo, err := git.OpenRepository(eb.env.repoPath)
+		if err != nil {
+			return err
+		}
+
+		if repo == nil {
+			return errors.New(`nil repository returned`)
+		}
+		*eb.repo = *repo
 	}
 	return nil
 }
