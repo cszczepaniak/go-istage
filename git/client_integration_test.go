@@ -43,6 +43,45 @@ func TestUnstagedFiles(t *testing.T) {
 	}, fs[3])
 }
 
+func TestStagedFiles(t *testing.T) {
+	r := NewTestRepo(t)
+
+	f2 := r.MakeFile(t, `b.txt`).AddLine(`def`).ShouldCommit(`abc`).Build()
+	f3 := r.MakeFile(t, `c.txt`).AddLine(`ghi`).ShouldCommit(`abc`).Build()
+	f4 := r.MakeFile(t, `old.txt`).AddLine(`old text`).ShouldCommit(`abc`).Build()
+
+	f1 := r.MakeFile(t, `a.txt`).AddLine(`abc`).ShouldStage().Build()
+
+	gc, err := NewClient(r.env)
+	require.NoError(t, err)
+
+	f2.Append("ghi\n")
+	f3.Remove()
+	f4.Rename(`new.txt`)
+
+	r.AddAll()
+
+	fs, err := gc.StagedFiles()
+	require.NoError(t, err)
+	require.Len(t, fs, 4)
+	assert.Equal(t, File{
+		Path:   f1.path,
+		Status: FileStatusAdded,
+	}, fs[0])
+	assert.Equal(t, File{
+		Path:   f2.path,
+		Status: FileStatusModified,
+	}, fs[1])
+	assert.Equal(t, File{
+		Path:   f3.path,
+		Status: FileStatusDeleted,
+	}, fs[2])
+	assert.Equal(t, File{
+		Path:   `new.txt`,
+		Status: FileStatusRenamed,
+	}, fs[3])
+}
+
 func TestUnstagedChanges(t *testing.T) {
 	r := NewTestRepo(t)
 
