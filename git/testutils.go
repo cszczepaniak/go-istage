@@ -189,3 +189,16 @@ func (fbr fileBuildResult) Remove() {
 	err := os.Remove(fbr.path)
 	require.NoError(fbr.t, err)
 }
+
+func (fbr fileBuildResult) Rename(name string) {
+	require.NotEqual(fbr.t, fbr.path, name, `cannot rename file to itself`)
+
+	bs, err := os.ReadFile(fbr.path)
+	require.NoError(fbr.t, err)
+
+	err = os.WriteFile(name, bs, 0o644)
+	require.NoError(fbr.t, err)
+
+	err = os.Remove(fbr.path)
+	require.NoError(fbr.t, err)
+}

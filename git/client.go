@@ -51,6 +51,36 @@ func (c *Client) ApplyPatch(patchContents string, dir patch.Direction) error {
 	return b.Run()
 }
 
+func (c *Client) UnstagedFiles() ([]File, error) {
+	opts := &git.StatusOptions{
+		Show:  git.StatusShowWorkdirOnly,
+		Flags: git.StatusOptIncludeUntracked | git.StatusOptRecurseUntrackedDirs | git.StatusOptRenamesIndexToWorkdir,
+	}
+	sl, err := c.repo.StatusList(opts)
+	if err != nil {
+		return nil, err
+	}
+
+	n, err := sl.EntryCount()
+	if err != nil {
+		return nil, err
+	}
+
+	res := make([]File, 0, n)
+	for i := 0; i < n; i++ {
+		e, err := sl.ByIndex(i)
+		if err != nil {
+			return nil, err
+		}
+		res = append(res, File{
+			Path:   e.IndexToWorkdir.NewFile.Path,
+			Status: fileStatusFromGitDelta(e.IndexToWorkdir.Status),
+		})
+	}
+
+	return res, nil
+}
+
 func (c *Client) UnstagedChanges() ([]string, error) {
 	opts, err := git.DefaultDiffOptions()
 	if err != nil {
