@@ -16,4 +16,5 @@ jobs:
       - run: |
           cd /home/runner/go/pkg/mod/github.com/libgit2/git2go/v34@v34.0.0
           chmod +x ./script/build-libgit2-static.sh
+          chmod +x ./script/build-libgit2.sh
           sudo make install-static
