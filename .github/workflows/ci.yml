@@ -19,6 +19,6 @@ jobs:
           chmod +x ./script/build-libgit2.sh
           sudo mkdir ./vendor
           cd ./vendor
-          sudo git clone -b v1.6.4 https://github.com/libgit2/libgit2.git
+          sudo git clone -b v1.5.0 https://github.com/libgit2/libgit2.git
           cd -
           sudo make install-static
