@@ -37,6 +37,12 @@ func NewTestRepo(t testing.TB) testRepo {
 	out, err := exec.Command(`git`, `init`, `-b`, `master`).CombinedOutput()
 	require.NoError(t, err, "failed to init git repo:\n %s\n", out)
 
+	out, err = exec.Command(`git`, `config`, `user.email`, `johndoe@foo.com`).CombinedOutput()
+	require.NoError(t, err, "failed to init user email:\n %s\n", out)
+
+	out, err = exec.Command(`git`, `config`, `user.name`, `John Doe`).CombinedOutput()
+	require.NoError(t, err, "failed to init user name:\n %s\n", out)
+
 	out, err = exec.Command(`git`, `commit`, `--allow-empty`, `-m`, `initial commit`).CombinedOutput()
 	require.NoError(t, err, "failed to make initial git commit:\n %s\n", out)
 
