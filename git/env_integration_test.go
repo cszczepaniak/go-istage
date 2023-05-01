@@ -18,7 +18,7 @@ func TestResolveGitPath(t *testing.T) {
 }
 
 func TestResolveRepoPath(t *testing.T) {
-	NewTestRepo(t)
+	r := NewTestRepo(t)
 
 	p, err := resolveRepoPath()
 	require.NoError(t, err)
