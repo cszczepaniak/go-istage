@@ -15,5 +15,4 @@ jobs:
       - run: go mod download
       - run: |
           cd /home/runner/go/pkg/mod/github.com/libgit2/git2go/v34@v34.0.0
-          git submodule update --init
-          make install-static
+          ls
