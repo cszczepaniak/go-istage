@@ -149,6 +149,17 @@ func (v view) updateDocs(staged bool) tea.Cmd {
 	}
 }
 
+func (v view) updateUnstagedFiles() tea.Msg {
+	files, err := v.updater.UnstagedFiles()
+	if err != nil {
+		return err
+	}
+
+	return filesMsg{
+		files: files,
+	}
+}
+
 func (v view) commit(msg string) tea.Cmd {
 	return func() tea.Msg {
 		return v.gitExecer.

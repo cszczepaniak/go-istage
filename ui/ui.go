@@ -25,6 +25,8 @@ type patcher interface {
 type docUpdater interface {
 	StagedChanges() (patch.Document, error)
 	UnstagedChanges() (patch.Document, error)
+	StagedFiles() ([]git.File, error)
+	UnstagedFiles() ([]git.File, error)
 }
 
 type gitExecer interface {
@@ -39,6 +41,9 @@ type view struct {
 	viewStage    bool
 	stagedView   *documentView
 	unstagedView *documentView
+
+	viewFiles         bool
+	unstagedFilesView *fileView
 
 	committing  bool
 	commitInput textarea.Model
@@ -162,6 +167,9 @@ func (v view) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case "c":
 			v.committing = true
 			return v, v.commitInput.Focus()
+		case "f":
+			v.viewFiles = true
+			return v, v.updateUnstagedFiles
 		}
 	case refreshMsg:
 		return v, v.updateDocs(v.viewStage)
@@ -174,6 +182,14 @@ func (v view) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 		if v.currentView() != nil {
 			v.currentView().setDoc(msg.d, v.h)
+		}
+	case filesMsg:
+		if v.unstagedFilesView == nil {
+			v.unstagedFilesView = newFileView(msg.files, v.h)
+		}
+
+		if v.unstagedFilesView != nil {
+			v.unstagedFilesView.setFiles(msg.files, v.h)
 		}
 	case error:
 		logging.Error(`update.error`, `err`, msg)
@@ -200,6 +216,9 @@ func (v view) View() string {
 			errMessageStyle.Render(v.err.Error()),
 			"Press enter to continue",
 		)
+	}
+	if v.viewFiles {
+		return v.unstagedFilesView.view()
 	}
 	if v.committing {
 		return fmt.Sprintf("Enter a commit message:\n\n%s\n\n%s", v.commitInput.View(), "(enter to commit; esc to abort)")

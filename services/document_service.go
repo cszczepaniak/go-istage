@@ -1,12 +1,15 @@
 package services
 
 import (
+	"github.com/cszczepaniak/go-istage/git"
 	"github.com/cszczepaniak/go-istage/patch"
 )
 
 type gitClient interface {
 	StagedChanges() ([]string, error)
 	UnstagedChanges() ([]string, error)
+	StagedFiles() ([]git.File, error)
+	UnstagedFiles() ([]git.File, error)
 }
 
 type DocumentService struct {
@@ -52,4 +55,12 @@ func (ds *DocumentService) UnstagedChanges() (patch.Document, error) {
 	}
 
 	return patch.ParseDocument(changes), nil
+}
+
+func (ds *DocumentService) UnstagedFiles() ([]git.File, error) {
+	return ds.gc.UnstagedFiles()
+}
+
+func (ds *DocumentService) StagedFiles() ([]git.File, error) {
+	return ds.gc.StagedFiles()
 }
