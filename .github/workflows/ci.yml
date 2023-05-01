@@ -24,4 +24,7 @@ jobs:
           popd
           sudo make install-static
           popd
-          pwd
+      - name: Build statically
+        run: make build
+      - name: Test
+        run: make test
