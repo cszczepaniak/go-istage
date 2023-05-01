@@ -7,6 +7,8 @@ import (
 )
 
 func TestExec(t *testing.T) {
+	NewTestRepo(t)
+
 	env, err := NewEnvironment(``, ``)
 	require.NoError(t, err)
 

@@ -1,7 +1,6 @@
 package git
 
 import (
-	"os"
 	"path"
 	"testing"
 
@@ -10,9 +9,7 @@ import (
 )
 
 func TestResolveGitPath(t *testing.T) {
-	r := NewTestRepo(t)
-	err := os.Chdir(r.path)
-	require.NoError(t, err)
+	NewTestRepo(t)
 
 	p, err := resolveGitPath()
 	require.NoError(t, err)
@@ -21,9 +18,7 @@ func TestResolveGitPath(t *testing.T) {
 }
 
 func TestResolveRepoPath(t *testing.T) {
-	r := NewTestRepo(t)
-	err := os.Chdir(r.path)
-	require.NoError(t, err)
+	NewTestRepo(t)
 
 	p, err := resolveRepoPath()
 	require.NoError(t, err)
