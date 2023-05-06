@@ -18,14 +18,16 @@ func New() *UI {
 func (u *UI) Init() tea.Cmd { return nil }
 
 func (u *UI) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
-	return u, nil
+	newTextInput, cmd := u.textInput.Update(msg)
+	u.textInput = newTextInput
+
+	return u, cmd
 }
 
 func (u *UI) View() string {
 	return u.textInput.View()
 }
 
-func (u *UI) Focus() tea.Msg {
-	u.textInput.Focus()
-	return nil
+func (u *UI) OnEnter() tea.Cmd {
+	return u.textInput.Focus()
 }

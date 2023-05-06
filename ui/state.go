@@ -110,7 +110,7 @@ func (sv StateVariant) OnEnter(v view) tea.Cmd {
 	case ViewStagedFiles:
 		return v.stagedFilesView.UpdateFiles
 	case Committing:
-		return v.commitView.Focus
+		return v.commitView.OnEnter()
 	}
 	panic(`unreachable`)
 }
