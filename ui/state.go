@@ -11,8 +11,13 @@ func (v view) handleStateChange(msg tea.Msg) (view, tea.Cmd) {
 		return v, nil
 	}
 
+	nextState := v.state.Next(event)
+	if nextState == v.state {
+		return v, nil
+	}
+
 	v.prevState = v.state
-	v.state = v.state.Next(event)
+	v.state = nextState
 	v.currentModel = v.state.Model(v)
 	var cmd tea.Cmd
 	if v.state != v.prevState {
