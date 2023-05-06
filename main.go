@@ -72,7 +72,7 @@ func main() {
 
 	ps := services.NewPatchingService(gs)
 
-	err = ui.RunUI(ps, ds, gs)
+	err = ui.RunUI(ps, ds, gs, gs)
 	if err != nil {
 		logging.Error(`error during UI runtime`, `err`, err)
 	}
