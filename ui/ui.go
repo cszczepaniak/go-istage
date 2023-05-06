@@ -153,6 +153,7 @@ func (v view) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		v.unstagedFilesView.Update(msg)
 		v.stagedLinesView.Update(msg)
 		v.unstagedLinesView.Update(msg)
+		v.commitView.Update(msg)
 		v.w = msg.Width
 		v.h = msg.Height
 		return v, nil

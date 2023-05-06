@@ -18,6 +18,11 @@ func New() *UI {
 func (u *UI) Init() tea.Cmd { return nil }
 
 func (u *UI) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+	switch msg := msg.(type) {
+	case tea.WindowSizeMsg:
+		u.textInput.SetWidth(msg.Width)
+		return u, nil
+	}
 	newTextInput, cmd := u.textInput.Update(msg)
 	u.textInput = newTextInput
 
