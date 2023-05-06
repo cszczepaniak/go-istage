@@ -49,7 +49,6 @@ func (v view) commit(msg string) tea.Cmd {
 			return err
 		}
 
-		logging.Info(`commit`, `prevState`, v.prevState, `state`, v.state)
 		return goToStateMsg{
 			state: v.prevState,
 		}

@@ -61,9 +61,6 @@ type view struct {
 
 	commitView *commit.UI
 
-	committing  bool
-	commitInput textarea.Model
-
 	err error
 
 	h, w int
@@ -71,7 +68,6 @@ type view struct {
 
 func newView(p patcher, u docUpdater, ge gitExecer, fs fileStager) view {
 	v := view{
-		commitInput:  textarea.New(),
 		patcher:      p,
 		updater:      u,
 		gitExecer:    ge,
@@ -192,53 +188,17 @@ func (v view) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return v, cmd
 	}
 
-	if v.committing {
-		switch msg := msg.(type) {
-		case tea.KeyMsg:
-			switch msg.String() {
-			case "esc", "enter":
-				commitMsg := v.commitInput.Value()
-				v.committing = false
-				if msg.String() == "enter" {
-					v.commitInput.Reset()
-					return v, tea.Sequence(
-						v.commit(commitMsg),
-						//tea.Batch(v.updateDocs(false), v.updateDocs(true)),
-					)
-				}
-				return v, nil
-			}
-			mdl, cmd := v.commitInput.Update(msg)
-			v.commitInput = mdl
-			return v, cmd
-		}
-	}
-
 	_, cmd = v.currentModel.Update(msg)
 	return v, cmd
 
 	switch msg := msg.(type) {
-	case tea.WindowSizeMsg:
-		v.w = msg.Width
-		v.commitInput.SetWidth(v.w)
 	case tea.KeyMsg:
 		switch msg.String() {
 		// case "r":
 		// 	return v, v.revertLine
 		// case "R":
 		// 	return v, v.revertHunk
-		case "c":
-			v.committing = true
-			return v, v.commitInput.Focus()
 		}
-	case filesMsg:
-		// if v.unstagedFilesView == nil {
-		// 	v.unstagedFilesView = newFileView(msg.files, v.h)
-		// }
-
-		// if v.unstagedFilesView != nil {
-		// 	v.unstagedFilesView.setFiles(msg.files, v.h)
-		// }
 	case error:
 		logging.Error(`update.error`, `err`, msg)
 		v.err = msg
@@ -256,9 +216,6 @@ func (v view) View() string {
 			errMessageStyle.Render(v.err.Error()),
 			"Press enter to continue",
 		)
-	}
-	if v.committing {
-		return fmt.Sprintf("Enter a commit message:\n\n%s\n\n%s", v.commitInput.View(), "(enter to commit; esc to abort)")
 	}
 
 	return v.currentModel.View()
