@@ -26,6 +26,8 @@ func eventFromMsg(msg tea.Msg) Event {
 			return ToggleStageEvent
 		case `f`:
 			return ToggleDiffEvent
+		case `c`:
+			return StartCommitEvent
 		}
 	}
 	return UnknownEvent
@@ -35,6 +37,7 @@ const (
 	UnknownEvent Event = iota
 	ToggleStageEvent
 	ToggleDiffEvent
+	StartCommitEvent
 )
 
 type StateVariant int
@@ -44,6 +47,7 @@ const (
 	ViewUnstagedFiles
 	ViewStagedLines
 	ViewStagedFiles
+	Committing
 )
 
 var stateMap = map[Event]map[StateVariant]StateVariant{
@@ -52,12 +56,21 @@ var stateMap = map[Event]map[StateVariant]StateVariant{
 		ViewUnstagedFiles: ViewStagedFiles,
 		ViewStagedLines:   ViewUnstagedLines,
 		ViewStagedFiles:   ViewUnstagedFiles,
+		Committing:        Committing,
 	},
 	ToggleDiffEvent: {
 		ViewUnstagedLines: ViewUnstagedFiles,
 		ViewUnstagedFiles: ViewUnstagedLines,
 		ViewStagedLines:   ViewStagedFiles,
 		ViewStagedFiles:   ViewStagedLines,
+		Committing:        Committing,
+	},
+	StartCommitEvent: {
+		ViewUnstagedLines: Committing,
+		ViewUnstagedFiles: Committing,
+		ViewStagedLines:   Committing,
+		ViewStagedFiles:   Committing,
+		Committing:        Committing,
 	},
 }
 
@@ -80,6 +93,8 @@ func (sv StateVariant) Model(v view) tea.Model {
 		return v.stagedLinesView
 	case ViewStagedFiles:
 		return v.stagedFilesView
+	case Committing:
+		return v.commitView
 	}
 	panic(`unreachable`)
 }
@@ -94,6 +109,8 @@ func (sv StateVariant) OnEnter(v view) tea.Cmd {
 		return v.stagedLinesView.UpdateDoc
 	case ViewStagedFiles:
 		return v.stagedFilesView.UpdateFiles
+	case Committing:
+		return v.commitView.Focus
 	}
 	panic(`unreachable`)
 }

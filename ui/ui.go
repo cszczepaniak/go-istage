@@ -9,6 +9,7 @@ import (
 	"github.com/cszczepaniak/go-istage/git"
 	"github.com/cszczepaniak/go-istage/logging"
 	"github.com/cszczepaniak/go-istage/patch"
+	"github.com/cszczepaniak/go-istage/ui/commit"
 	"github.com/cszczepaniak/go-istage/ui/files"
 	"github.com/cszczepaniak/go-istage/ui/lines"
 	"github.com/cszczepaniak/go-istage/ui/loading"
@@ -56,6 +57,8 @@ type view struct {
 
 	stagedFilesView   *files.UI
 	unstagedFilesView *files.UI
+
+	commitView *commit.UI
 
 	committing  bool
 	commitInput textarea.Model
@@ -112,6 +115,8 @@ func newView(p patcher, u docUpdater, ge gitExecer, fs fileStager) view {
 		getFilesFunc(v.updater.UnstagedFiles),
 		v.h,
 	)
+
+	v.commitView = commit.New()
 
 	v.state = ViewUnstagedLines
 	v.currentModel = v.state.Model(v)
