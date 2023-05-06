@@ -167,6 +167,7 @@ func (v view) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case goToStateMsg:
 		v.prevState = v.state
 		v.state = msg.state
+		v.currentModel = v.state.Model(v)
 		return v, v.state.OnEnter(v)
 	}
 
