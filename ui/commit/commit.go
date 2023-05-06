@@ -30,7 +30,7 @@ func (u *UI) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (u *UI) View() string {
-	return u.textInput.View()
+	return fmt.Sprintf("Enter a commit message:\n\n%s\n\n(Enter to commit, escape to abort)\n", u.textInput.View())
 }
 
 func (u *UI) OnEnter() tea.Cmd {
