@@ -161,6 +161,7 @@ func (v view) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case commit.DoCommitMsg:
 		return v, v.commit(msg.CommitMessage)
 	case goToStateMsg:
+		// TODO this should be centralized with the other spot we update state.
 		v.prevState = v.state
 		v.state = msg.state
 		v.currentModel = v.state.Model(v)
