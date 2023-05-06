@@ -161,6 +161,8 @@ func (v view) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return v, v.handlePatch(msg)
 	case files.HandleFileMsg:
 		return v, v.handleFile(msg)
+	case commit.DoCommitMsg:
+		return v, v.commit(msg.CommitMessage)
 	}
 
 	if v.err != nil {
