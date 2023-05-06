@@ -15,3 +15,7 @@ type docMsg struct {
 type filesMsg struct {
 	files []git.File
 }
+
+type goToStateMsg struct {
+	state StateVariant
+}

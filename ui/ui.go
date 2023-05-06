@@ -48,7 +48,8 @@ type view struct {
 	gitExecer  gitExecer
 	fileStager fileStager
 
-	state StateVariant
+	prevState StateVariant
+	state     StateVariant
 
 	currentModel tea.Model
 
@@ -163,6 +164,10 @@ func (v view) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return v, v.handleFile(msg)
 	case commit.DoCommitMsg:
 		return v, v.commit(msg.CommitMessage)
+	case goToStateMsg:
+		v.prevState = v.state
+		v.state = msg.state
+		return v, v.state.OnEnter(v)
 	}
 
 	if v.err != nil {

@@ -6,17 +6,16 @@ import (
 )
 
 func (v view) handleStateChange(msg tea.Msg) (view, tea.Cmd) {
-	event := v.eventFromMsg(msg)
+	event := eventFromMsg(msg)
 	if event == UnknownEvent {
 		return v, nil
 	}
 
-	prevState := v.state
-
+	v.prevState = v.state
 	v.state = v.state.Next(event)
 	v.currentModel = v.state.Model(v)
 	var cmd tea.Cmd
-	if v.state != prevState {
+	if v.state != v.prevState {
 		// We entered a new state.
 		cmd = v.state.OnEnter(v)
 	}

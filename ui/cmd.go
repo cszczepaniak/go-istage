@@ -40,10 +40,17 @@ func (v view) handleFile(msg files.HandleFileMsg) tea.Cmd {
 
 func (v view) commit(msg string) tea.Cmd {
 	return func() tea.Msg {
-		return v.gitExecer.
+		err := v.gitExecer.
 			Exec(`commit`).
 			WithArgs(`-F`, `-`).
 			WithStdin(strings.NewReader(msg)).
 			Run()
+		if err != nil {
+			return err
+		}
+
+		return goToStateMsg{
+			state: v.prevState,
+		}
 	}
 }
