@@ -1,6 +1,7 @@
 package git
 
 import (
+	"path"
 	"strings"
 
 	"github.com/cszczepaniak/go-istage/patch"
@@ -49,6 +50,21 @@ func (c *Client) ApplyPatch(patchContents string, dir patch.Direction) error {
 	b.WithArgs(`--whitespace=nowarn`)
 
 	return b.Run()
+}
+
+func (c *Client) StageFile(file File) error {
+	path := path.Join(c.repo.Workdir(), file.Path)
+	path = file.Path
+	return c.Exec(`add`).WithArgs(path).Run()
+}
+
+func (c *Client) UnstageFile(file File) error {
+	path := path.Join(c.repo.Workdir(), file.Path)
+	path = file.Path
+	if file.Status == FileStatusDeleted {
+		return c.Exec(`restore`).WithArgs(`--staged`, path).Run()
+	}
+	return c.Exec(`reset`).WithArgs(path).Run()
 }
 
 func (c *Client) UnstagedFiles() ([]File, error) {
