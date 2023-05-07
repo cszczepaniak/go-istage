@@ -1,171 +1,66 @@
 package ui
 
 import (
-	"fmt"
-	"runtime/debug"
+	"errors"
 	"strings"
 
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/cszczepaniak/go-istage/logging"
 	"github.com/cszczepaniak/go-istage/patch"
+	"github.com/cszczepaniak/go-istage/ui/files"
+	"github.com/cszczepaniak/go-istage/ui/lines"
 )
 
-func (v view) stageLine() tea.Msg {
-	if v.viewStage {
-		return nil
-	}
-
-	err := v.patcher.ApplyPatch(
-		patch.Stage,
-		v.currentView().doc,
-		[]int{v.currentView().currentLine()},
-	)
-	if err != nil {
-		logging.Error(`stageLine failed`, `err`, err)
-		return err
-	}
-	return refreshMsg{}
-}
-
-func (v view) stageHunk() (msg tea.Msg) {
-	defer func() {
-		if r := recover(); r != nil {
-			msg = fmt.Errorf("panic recovered: %+v\n%s", r, debug.Stack())
-		}
-	}()
-
-	if v.viewStage {
-		return nil
-	}
-
-	err := v.patcher.ApplyPatch(
-		patch.Stage,
-		v.currentView().doc,
-		v.currentView().linesInCurrentHunk(),
-	)
-	if err != nil {
-		logging.Error(`stageHunk failed`, `err`, err)
-		return err
-	}
-	return refreshMsg{}
-}
-
-func (v view) unstageLine() tea.Msg {
-	if !v.viewStage {
-		return nil
-	}
-
-	err := v.patcher.ApplyPatch(
-		patch.Unstage,
-		v.currentView().doc,
-		[]int{v.currentView().currentLine()},
-	)
-	if err != nil {
-		logging.Error(`unstageLine failed`, `err`, err)
-		return err
-	}
-	return refreshMsg{}
-}
-
-func (v view) unstageHunk() (msg tea.Msg) {
-	defer func() {
-		if r := recover(); r != nil {
-			msg = fmt.Errorf("panic recovered: %+v\n%s", r, debug.Stack())
-		}
-	}()
-
-	if !v.viewStage {
-		return nil
-	}
-
-	err := v.patcher.ApplyPatch(
-		patch.Unstage,
-		v.currentView().doc,
-		v.currentView().linesInCurrentHunk(),
-	)
-	if err != nil {
-		logging.Error(`unstageHunk failed`, `err`, err)
-		return err
-	}
-	return refreshMsg{}
-}
-
-func (v view) revertLine() (msg tea.Msg) {
-	if v.viewStage {
-		return nil
-	}
-
-	err := v.patcher.ApplyPatch(
-		patch.Reset,
-		v.currentView().doc,
-		[]int{v.currentView().currentLine()},
-	)
-	if err != nil {
-		logging.Error(`revertLine failed`, `err`, err)
-		return err
-	}
-	return refreshMsg{}
-}
-
-func (v view) revertHunk() (msg tea.Msg) {
-	defer func() {
-		if r := recover(); r != nil {
-			msg = fmt.Errorf("panic recovered: %+v\n%s", r, debug.Stack())
-		}
-	}()
-
-	if v.viewStage {
-		return nil
-	}
-
-	err := v.patcher.ApplyPatch(
-		patch.Reset,
-		v.currentView().doc,
-		v.currentView().linesInCurrentHunk(),
-	)
-	if err != nil {
-		logging.Error(`revertHunk failed`, `err`, err)
-		return err
-	}
-	return refreshMsg{}
-}
-
-func (v view) updateDocs(staged bool) tea.Cmd {
+func (v view) handlePatch(msg lines.PatchMsg) tea.Cmd {
 	return func() tea.Msg {
-		var doc patch.Document
-		var err error
-
-		if v.viewStage {
-			doc, err = v.updater.StagedChanges()
-		} else {
-			doc, err = v.updater.UnstagedChanges()
-		}
+		err := v.patcher.ApplyPatch(msg.Direction, msg.Doc, msg.Lines)
 		if err != nil {
-			logging.Error(`updateDocs failed`, `err`, err)
 			return err
 		}
-
-		return docMsg{d: doc, staged: staged}
+		return lines.RefreshMsg{}
 	}
 }
 
-func (v view) updateUnstagedFiles() tea.Msg {
-	files, err := v.updater.UnstagedFiles()
-	if err != nil {
-		return err
+func (v view) handleResetPatch(msg lines.ResetMsg) tea.Cmd {
+	return func() tea.Msg {
+		err := v.patcher.ApplyPatch(patch.Reset, msg.Doc, msg.Lines)
+		if err != nil {
+			return err
+		}
+		return lines.RefreshMsg{}
 	}
+}
 
-	return filesMsg{
-		files: files,
+func (v view) handleFile(msg files.HandleFileMsg) tea.Cmd {
+	return func() tea.Msg {
+		var err error
+		switch msg.Direction {
+		case patch.Stage:
+			err = v.fileStager.StageFile(msg.File)
+		case patch.Unstage:
+			err = v.fileStager.UnstageFile(msg.File)
+		default:
+			err = errors.New(`unimplemented`)
+		}
+		if err != nil {
+			return err
+		}
+		return files.RefreshMsg{}
 	}
 }
 
 func (v view) commit(msg string) tea.Cmd {
 	return func() tea.Msg {
-		return v.gitExecer.
+		err := v.gitExecer.
 			Exec(`commit`).
 			WithArgs(`-F`, `-`).
 			WithStdin(strings.NewReader(msg)).
 			Run()
+		if err != nil {
+			return err
+		}
+
+		return goToStateMsg{
+			state: v.prevState,
+		}
 	}
 }

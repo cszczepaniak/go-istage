@@ -1,21 +1,17 @@
-package ui
+package files
 
 import (
 	"github.com/cszczepaniak/go-istage/git"
 	"github.com/cszczepaniak/go-istage/patch"
 )
 
-type refreshMsg struct{}
+type RefreshMsg struct{}
 
-type docMsg struct {
-	staged bool
-	d      patch.Document
+type HandleFileMsg struct {
+	File      git.File
+	Direction patch.Direction
 }
 
 type filesMsg struct {
 	files []git.File
-}
-
-type goToStateMsg struct {
-	state StateVariant
 }

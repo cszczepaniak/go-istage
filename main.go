@@ -50,7 +50,9 @@ func main() {
 
 	flag.Parse()
 
-	err := logging.Init()
+	err := logging.Init(logging.Config{
+		OutputPath: `log/debug.log`,
+	})
 	if err != nil {
 		panic(`failed to initialize logging: ` + err.Error())
 	}
@@ -72,7 +74,7 @@ func main() {
 
 	ps := services.NewPatchingService(gs)
 
-	err = ui.RunUI(ps, ds, gs)
+	err = ui.RunUI(ps, ds, gs, gs)
 	if err != nil {
 		logging.Error(`error during UI runtime`, `err`, err)
 	}

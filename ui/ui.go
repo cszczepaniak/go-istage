@@ -9,10 +9,14 @@ import (
 	"github.com/cszczepaniak/go-istage/git"
 	"github.com/cszczepaniak/go-istage/logging"
 	"github.com/cszczepaniak/go-istage/patch"
+	"github.com/cszczepaniak/go-istage/ui/commit"
+	"github.com/cszczepaniak/go-istage/ui/files"
+	"github.com/cszczepaniak/go-istage/ui/lines"
+	"github.com/cszczepaniak/go-istage/ui/loading"
 )
 
-func RunUI(p patcher, u docUpdater, ge gitExecer) error {
-	v := newView(p, u, ge)
+func RunUI(p patcher, u docUpdater, ge gitExecer, fs fileStager) error {
+	v := newView(p, u, ge, fs)
 	prog := tea.NewProgram(v)
 	_, err := prog.Run()
 	return err
@@ -20,6 +24,11 @@ func RunUI(p patcher, u docUpdater, ge gitExecer) error {
 
 type patcher interface {
 	ApplyPatch(dir patch.Direction, doc patch.Document, selectedLines []int) error
+}
+
+type fileStager interface {
+	StageFile(file git.File) error
+	UnstageFile(file git.File) error
 }
 
 type docUpdater interface {
@@ -34,46 +43,139 @@ type gitExecer interface {
 }
 
 type view struct {
-	patcher   patcher
-	updater   docUpdater
-	gitExecer gitExecer
+	patcher    patcher
+	updater    docUpdater
+	gitExecer  gitExecer
+	fileStager fileStager
 
-	viewStage    bool
-	stagedView   *documentView
-	unstagedView *documentView
+	prevState StateVariant
+	state     StateVariant
 
-	viewFiles         bool
-	unstagedFilesView *fileView
+	currentModel tea.Model
 
-	committing  bool
-	commitInput textarea.Model
+	stagedLinesView   *lines.UI
+	unstagedLinesView *lines.UI
+
+	stagedFilesView   *files.UI
+	unstagedFilesView *files.UI
+
+	commitView *commit.UI
 
 	err error
 
 	h, w int
 }
 
-func newView(p patcher, u docUpdater, ge gitExecer) view {
-	return view{
-		commitInput: textarea.New(),
-		patcher:     p,
-		updater:     u,
-		gitExecer:   ge,
+func newView(p patcher, u docUpdater, ge gitExecer, fs fileStager) view {
+	v := view{
+		patcher:      p,
+		updater:      u,
+		gitExecer:    ge,
+		fileStager:   fs,
+		currentModel: loading.New(),
 	}
+
+	v.stagedLinesView = lines.New(
+		lines.Staged,
+		getDocFunc(v.updater.StagedChanges),
+		lines.Config{
+			HandleLineKey: unstageLineKey,
+			HandleHunkKey: unstageHunkKey,
+		},
+		v.h,
+	)
+
+	v.unstagedLinesView = lines.New(
+		lines.Unstaged,
+		getDocFunc(v.updater.UnstagedChanges),
+		lines.Config{
+			HandleLineKey: stageLineKey,
+			HandleHunkKey: stageHunkKey,
+
+			CanReset:     true,
+			ResetLineKey: resetLineKey,
+			ResetHunkKey: resetHunkKey,
+		},
+		v.h,
+	)
+
+	v.stagedFilesView = files.NewView(
+		files.Staged,
+		files.KeyConfig{
+			HandleFileKey: unstageLineKey,
+		},
+		getFilesFunc(v.updater.StagedFiles),
+		v.h,
+	)
+
+	v.unstagedFilesView = files.NewView(
+		files.Unstaged,
+		files.KeyConfig{
+			HandleFileKey: stageLineKey,
+		},
+		getFilesFunc(v.updater.UnstagedFiles),
+		v.h,
+	)
+
+	v.commitView = commit.New()
+
+	v.state = ViewUnstagedLines
+	v.currentModel = v.state.Model(v)
+	return v
 }
 
-func (v view) currentView() *documentView {
-	if v.viewStage {
-		return v.stagedView
-	}
-	return v.unstagedView
-}
+const (
+	stageLineKey   = "s"
+	stageHunkKey   = "S"
+	unstageLineKey = "u"
+	unstageHunkKey = "U"
+	resetLineKey   = "r"
+	resetHunkKey   = "R"
+)
 
 func (v view) Init() tea.Cmd {
-	return tea.Batch(v.updateDocs(false), v.updateDocs(true), textarea.Blink)
+	return tea.Batch(
+		v.stagedLinesView.Init(),
+		v.unstagedLinesView.Init(),
+		v.stagedFilesView.Init(),
+		v.unstagedFilesView.Init(),
+		textarea.Blink,
+	)
 }
 
 func (v view) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+	switch msg := msg.(type) {
+	case tea.KeyMsg:
+		switch msg.String() {
+		case "ctrl+c":
+			return v, tea.Quit
+		}
+	case tea.WindowSizeMsg:
+		// We need to let everybody know right away about the window size.
+		v.stagedFilesView.Update(msg)
+		v.unstagedFilesView.Update(msg)
+		v.stagedLinesView.Update(msg)
+		v.unstagedLinesView.Update(msg)
+		v.commitView.Update(msg)
+		v.w = msg.Width
+		v.h = msg.Height
+		return v, nil
+	case lines.PatchMsg:
+		return v, v.handlePatch(msg)
+	case lines.ResetMsg:
+		return v, v.handleResetPatch(msg)
+	case files.HandleFileMsg:
+		return v, v.handleFile(msg)
+	case commit.DoCommitMsg:
+		return v, v.commit(msg.CommitMessage)
+	case goToStateMsg:
+		// TODO this should be centralized with the other spot we update state.
+		v.prevState = v.state
+		v.state = msg.state
+		v.currentModel = v.state.Model(v)
+		return v, v.state.OnEnter(v)
+	}
+
 	if v.err != nil {
 		switch msg := msg.(type) {
 		case tea.KeyMsg:
@@ -89,107 +191,22 @@ func (v view) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 	}
 
-	if v.committing {
-		switch msg := msg.(type) {
-		case tea.KeyMsg:
-			switch msg.String() {
-			case "ctrl+c":
-				return v, tea.Quit
-			case "esc", "enter":
-				commitMsg := v.commitInput.Value()
-				v.committing = false
-				if msg.String() == "enter" {
-					v.commitInput.Reset()
-					return v, tea.Sequence(
-						v.commit(commitMsg),
-						tea.Batch(v.updateDocs(false), v.updateDocs(true)),
-					)
-				}
-				return v, nil
-			}
-			mdl, cmd := v.commitInput.Update(msg)
-			v.commitInput = mdl
-			return v, cmd
-		}
+	var cmd tea.Cmd
+	v, cmd = v.handleStateChange(msg)
+	if cmd != nil {
+		return v, cmd
 	}
 
+	_, cmd = v.currentModel.Update(msg)
+	return v, cmd
+
 	switch msg := msg.(type) {
-	case tea.WindowSizeMsg:
-		// I'm not really sure why, but it seems like to make bubbletea render properly, we need to subtract 1 from the
-		// height when setting the window.
-
-		v.h = msg.Height - 1
-		v.w = msg.Width
-
-		if v.stagedView != nil {
-			v.stagedView.resize(v.h)
-		}
-		if v.unstagedView != nil {
-			v.unstagedView.resize(v.h)
-		}
-
-		v.commitInput.SetWidth(v.w)
 	case tea.KeyMsg:
 		switch msg.String() {
-		case "q":
-			return v, tea.Quit
-		case "up":
-			v.currentView().navigate(navigateUp)
-		case "down":
-			v.currentView().navigate(navigateDown)
-		case "left":
-			v.currentView().navigate(navigateLeft)
-		case "right":
-			v.currentView().navigate(navigateRight)
-		case "t":
-			v.viewStage = !v.viewStage
-			return v, v.updateDocs(v.viewStage)
-		case "s":
-			if !v.viewStage {
-				return v, v.stageLine
-			}
-		case "S":
-			if !v.viewStage {
-				return v, v.stageHunk
-			}
-		case "u":
-			if v.viewStage {
-				return v, v.unstageLine
-			}
-		case "U":
-			if v.viewStage {
-				return v, v.unstageHunk
-			}
-		case "r":
-			return v, v.revertLine
-		case "R":
-			return v, v.revertHunk
-		case "c":
-			v.committing = true
-			return v, v.commitInput.Focus()
-		case "f":
-			v.viewFiles = true
-			return v, v.updateUnstagedFiles
-		}
-	case refreshMsg:
-		return v, v.updateDocs(v.viewStage)
-	case docMsg:
-		if msg.staged && v.stagedView == nil {
-			v.stagedView = newDocumentView(msg.d, v.h)
-		} else if !msg.staged && v.unstagedView == nil {
-			v.unstagedView = newDocumentView(msg.d, v.h)
-		}
-
-		if v.currentView() != nil {
-			v.currentView().setDoc(msg.d, v.h)
-		}
-	case filesMsg:
-		if v.unstagedFilesView == nil {
-			v.unstagedFilesView = newFileView(msg.files, v.h)
-		}
-
-		if v.unstagedFilesView != nil {
-			v.unstagedFilesView.setFiles(msg.files, v.h)
+		// case "r":
+		// 	return v, v.revertLine
+		// case "R":
+		// 	return v, v.revertHunk
 		}
 	case error:
 		logging.Error(`update.error`, `err`, msg)
@@ -199,14 +216,6 @@ func (v view) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return v, nil
 }
 
-var kindToColor = map[patch.LineKind]lipgloss.Style{
-	patch.AdditionLine: lipgloss.NewStyle().Foreground(lipgloss.Color(`#00FF00`)),
-	patch.RemovalLine:  lipgloss.NewStyle().Foreground(lipgloss.Color(`#FF0000`)),
-	patch.DiffLine:     lipgloss.NewStyle().Foreground(lipgloss.Color(`#FFFFFF`)),
-	patch.HunkLine:     lipgloss.NewStyle().Foreground(lipgloss.Color(`#00FFFF`)),
-}
-
-var selectedStyle = lipgloss.NewStyle().Background(lipgloss.Color(`#555555`))
 var errMessageStyle = lipgloss.NewStyle().Foreground(lipgloss.Color(`#777777`))
 
 func (v view) View() string {
@@ -217,11 +226,6 @@ func (v view) View() string {
 			"Press enter to continue",
 		)
 	}
-	if v.viewFiles {
-		return v.unstagedFilesView.view()
-	}
-	if v.committing {
-		return fmt.Sprintf("Enter a commit message:\n\n%s\n\n%s", v.commitInput.View(), "(enter to commit; esc to abort)")
-	}
-	return v.currentView().view()
+
+	return v.currentModel.View()
 }

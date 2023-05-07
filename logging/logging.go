@@ -15,10 +15,16 @@ var (
 	Errorf = logger.Errorf
 )
 
-func Init() error {
+type Config struct {
+	OutputPath string
+}
+
+func Init(lcfg Config) error {
 	cfg := zap.NewProductionConfig()
-	cfg.OutputPaths = []string{
-		`log/debug.log`,
+	if lcfg.OutputPath != `` {
+		cfg.OutputPaths = []string{
+			lcfg.OutputPath,
+		}
 	}
 	cfg.Level = zap.NewAtomicLevelAt(zap.DebugLevel)
 	cfg.DisableStacktrace = true
