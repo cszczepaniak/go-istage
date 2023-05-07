@@ -20,6 +20,16 @@ func (v view) handlePatch(msg lines.PatchMsg) tea.Cmd {
 	}
 }
 
+func (v view) handleResetPatch(msg lines.ResetMsg) tea.Cmd {
+	return func() tea.Msg {
+		err := v.patcher.ApplyPatch(patch.Reset, msg.Doc, msg.Lines)
+		if err != nil {
+			return err
+		}
+		return lines.RefreshMsg{}
+	}
+}
+
 func (v view) handleFile(msg files.HandleFileMsg) tea.Cmd {
 	return func() tea.Msg {
 		var err error

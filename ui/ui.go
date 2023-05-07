@@ -91,6 +91,10 @@ func newView(p patcher, u docUpdater, ge gitExecer, fs fileStager) view {
 		lines.Config{
 			HandleLineKey: stageLineKey,
 			HandleHunkKey: stageHunkKey,
+
+			CanReset:     true,
+			ResetLineKey: resetLineKey,
+			ResetHunkKey: resetHunkKey,
 		},
 		v.h,
 	)
@@ -125,6 +129,8 @@ const (
 	stageHunkKey   = "S"
 	unstageLineKey = "u"
 	unstageHunkKey = "U"
+	resetLineKey   = "r"
+	resetHunkKey   = "R"
 )
 
 func (v view) Init() tea.Cmd {
@@ -156,6 +162,8 @@ func (v view) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return v, nil
 	case lines.PatchMsg:
 		return v, v.handlePatch(msg)
+	case lines.ResetMsg:
+		return v, v.handleResetPatch(msg)
 	case files.HandleFileMsg:
 		return v, v.handleFile(msg)
 	case commit.DoCommitMsg:
