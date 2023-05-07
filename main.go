@@ -50,7 +50,9 @@ func main() {
 
 	flag.Parse()
 
-	err := logging.Init()
+	err := logging.Init(logging.Config{
+		OutputPath: `log/debug.log`,
+	})
 	if err != nil {
 		panic(`failed to initialize logging: ` + err.Error())
 	}
