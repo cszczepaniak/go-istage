@@ -27,19 +27,19 @@ type UI struct {
 	docType   DocType
 	docGetter docGetter
 
-	keyCfg KeyConfig
+	keyCfg Config
 
 	window *window.Window[patch.Line]
 	cursor int
 	h      int
 }
 
-type KeyConfig struct {
+type Config struct {
 	HandleLineKey string
 	HandleHunkKey string
 }
 
-func New(dt DocType, dg docGetter, keyCfg KeyConfig, windowSize int) *UI {
+func New(dt DocType, dg docGetter, keyCfg Config, windowSize int) *UI {
 	return &UI{
 		docType:   dt,
 		docGetter: dg,

@@ -78,7 +78,7 @@ func newView(p patcher, u docUpdater, ge gitExecer, fs fileStager) view {
 	v.stagedLinesView = lines.New(
 		lines.Staged,
 		getDocFunc(v.updater.StagedChanges),
-		lines.KeyConfig{
+		lines.Config{
 			HandleLineKey: unstageLineKey,
 			HandleHunkKey: unstageHunkKey,
 		},
@@ -88,7 +88,7 @@ func newView(p patcher, u docUpdater, ge gitExecer, fs fileStager) view {
 	v.unstagedLinesView = lines.New(
 		lines.Unstaged,
 		getDocFunc(v.updater.UnstagedChanges),
-		lines.KeyConfig{
+		lines.Config{
 			HandleLineKey: stageLineKey,
 			HandleHunkKey: stageHunkKey,
 		},
