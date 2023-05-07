@@ -80,7 +80,6 @@ func (u *UI) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case RefreshMsg:
 		return u, u.UpdateFiles
 	case filesMsg:
-		logging.Info(`filesMsg`, `len(files)`, len(msg.files))
 		u.setFiles(msg.files, u.h)
 	case error:
 		logging.Error(msg.Error())
