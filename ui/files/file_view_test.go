@@ -120,10 +120,9 @@ func TestUpdateFiles(t *testing.T) {
 		Path:   `d`,
 		Status: git.FileStatusModified,
 	})
+	fv.fg = files
 
-	fv = testutils.RunUpdateCycle[*UI](fv.Update(filesMsg{
-		files: []git.File(files),
-	}))
+	fv = testutils.RunUpdateCycle[*UI](fv.Update(RefreshMsg{}))
 
 	assert.EqualValues(t, files, fv.files)
 }

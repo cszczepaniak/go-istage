@@ -238,12 +238,16 @@ func (dv *UI) jumpToLine(index int) {
 	dv.cursor = relIndex
 }
 
-func (dv *UI) currentLine() int {
+func (dv *UI) currentLine() patch.Line {
+	return dv.doc.Lines[dv.currentLineIndex()]
+}
+
+func (dv *UI) currentLineIndex() int {
 	return dv.window.AbsoluteIndex(dv.cursor)
 }
 
 func (dv *UI) linesInCurrentHunk() []int {
-	lineIdx := dv.currentLine()
+	lineIdx := dv.currentLineIndex()
 	h, ok := findHunk(dv.doc, lineIdx)
 	if !ok {
 		logging.Warn(`hunk not found`, `index`, lineIdx)
@@ -271,9 +275,13 @@ func findHunk(doc patch.Document, idx int) (patch.Hunk, bool) {
 }
 
 func (u *UI) handleLine() tea.Msg {
+	if ln := u.currentLine(); !ln.Kind.IsAdditionOrRemoval() {
+		return nil
+	}
+
 	msg := PatchMsg{
 		Doc:   u.doc,
-		Lines: []int{u.currentLine()},
+		Lines: []int{u.currentLineIndex()},
 	}
 	msg.Direction = patch.Stage
 	if u.docType == Staged {
@@ -283,6 +291,15 @@ func (u *UI) handleLine() tea.Msg {
 }
 
 func (u *UI) handleHunk() tea.Msg {
+	e, ok := u.doc.FindEntry(u.currentLineIndex())
+	if !ok {
+		return nil
+	}
+	_, ok = e.FindHunk(u.currentLineIndex())
+	if !ok {
+		return nil
+	}
+
 	msg := PatchMsg{
 		Doc:   u.doc,
 		Lines: u.linesInCurrentHunk(),
@@ -297,7 +314,7 @@ func (u *UI) handleHunk() tea.Msg {
 func (u *UI) handleResetLine() tea.Msg {
 	return ResetMsg{
 		Doc:   u.doc,
-		Lines: []int{u.currentLine()},
+		Lines: []int{u.currentLineIndex()},
 	}
 }
 

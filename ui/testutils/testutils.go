@@ -41,5 +41,11 @@ func ExecKeyPress[T tea.Model](m T, key string) (T, tea.Msg) {
 		Runes: []rune(key),
 	}
 	mm, cmd := m.Update(msg)
-	return mm.(T), cmd()
+
+	m = mm.(T)
+	if cmd == nil {
+		return m, nil
+	}
+
+	return m, cmd()
 }
