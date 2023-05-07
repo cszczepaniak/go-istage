@@ -60,6 +60,7 @@ const (
 	ViewStagedLines
 	ViewStagedFiles
 	Committing
+	Error
 )
 
 var stateMap = map[Event]map[StateVariant]StateVariant{
@@ -69,6 +70,7 @@ var stateMap = map[Event]map[StateVariant]StateVariant{
 		ViewStagedLines:   ViewUnstagedLines,
 		ViewStagedFiles:   ViewUnstagedFiles,
 		Committing:        Committing,
+		Error:             Error,
 	},
 	ToggleDiffEvent: {
 		ViewUnstagedLines: ViewUnstagedFiles,
@@ -76,6 +78,7 @@ var stateMap = map[Event]map[StateVariant]StateVariant{
 		ViewStagedLines:   ViewStagedFiles,
 		ViewStagedFiles:   ViewStagedLines,
 		Committing:        Committing,
+		Error:             Error,
 	},
 	StartCommitEvent: {
 		ViewUnstagedLines: Committing,
@@ -83,6 +86,7 @@ var stateMap = map[Event]map[StateVariant]StateVariant{
 		ViewStagedLines:   Committing,
 		ViewStagedFiles:   Committing,
 		Committing:        Committing,
+		Error:             Error,
 	},
 }
 
@@ -107,6 +111,8 @@ func (sv StateVariant) Model(v view) tea.Model {
 		return v.stagedFilesView
 	case Committing:
 		return v.commitView
+	case Error:
+		return v.errorView
 	}
 	panic(`unreachable`)
 }
@@ -123,6 +129,8 @@ func (sv StateVariant) OnEnter(v view) tea.Cmd {
 		return v.stagedFilesView.UpdateFiles
 	case Committing:
 		return v.commitView.OnEnter()
+	case Error:
+		return nil
 	}
 	panic(`unreachable`)
 }

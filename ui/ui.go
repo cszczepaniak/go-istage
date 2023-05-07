@@ -1,15 +1,12 @@
 package ui
 
 import (
-	"fmt"
-
 	"github.com/charmbracelet/bubbles/textarea"
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
 	"github.com/cszczepaniak/go-istage/git"
-	"github.com/cszczepaniak/go-istage/logging"
 	"github.com/cszczepaniak/go-istage/patch"
 	"github.com/cszczepaniak/go-istage/ui/commit"
+	"github.com/cszczepaniak/go-istage/ui/errview"
 	"github.com/cszczepaniak/go-istage/ui/files"
 	"github.com/cszczepaniak/go-istage/ui/lines"
 	"github.com/cszczepaniak/go-istage/ui/loading"
@@ -61,7 +58,7 @@ type view struct {
 
 	commitView *commit.UI
 
-	err error
+	errorView *errview.UI
 
 	h, w int
 }
@@ -119,6 +116,8 @@ func newView(p patcher, u docUpdater, ge gitExecer, fs fileStager) view {
 
 	v.commitView = commit.New()
 
+	v.errorView = errview.New()
+
 	v.state = ViewUnstagedLines
 	v.currentModel = v.state.Model(v)
 	return v
@@ -139,6 +138,7 @@ func (v view) Init() tea.Cmd {
 		v.unstagedLinesView.Init(),
 		v.stagedFilesView.Init(),
 		v.unstagedFilesView.Init(),
+		v.errorView.Init(),
 		textarea.Blink,
 	)
 }
@@ -157,6 +157,7 @@ func (v view) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		v.stagedLinesView.Update(msg)
 		v.unstagedLinesView.Update(msg)
 		v.commitView.Update(msg)
+		v.errorView.Update(msg)
 		v.w = msg.Width
 		v.h = msg.Height
 		return v, nil
@@ -168,27 +169,27 @@ func (v view) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return v, v.handleFile(msg)
 	case commit.DoCommitMsg:
 		return v, v.commit(msg.CommitMessage)
+	case errview.ExitMsg:
+		// TODO this should be centralized with the other spot we update state.
+		v.state = v.prevState
+		v.prevState = Error
+		v.currentModel = v.state.Model(v)
+		return v, v.state.OnEnter(v)
 	case goToStateMsg:
 		// TODO this should be centralized with the other spot we update state.
 		v.prevState = v.state
 		v.state = msg.state
 		v.currentModel = v.state.Model(v)
 		return v, v.state.OnEnter(v)
-	}
+	case error:
+		// TODO this should be centralized with the other spot we update state.
+		v.prevState = v.state
+		v.state = Error
 
-	if v.err != nil {
-		switch msg := msg.(type) {
-		case tea.KeyMsg:
-			switch msg.String() {
-			case "q", "ctrl+c":
-				return v, tea.Quit
-			case "esc", "enter":
-				v.err = nil
-				return v, nil
-			}
+		v.currentModel = v.state.Model(v)
 
-			return v, nil
-		}
+		_, cmd := v.currentModel.Update(msg)
+		return v, cmd
 	}
 
 	var cmd tea.Cmd
@@ -199,33 +200,8 @@ func (v view) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	_, cmd = v.currentModel.Update(msg)
 	return v, cmd
-
-	switch msg := msg.(type) {
-	case tea.KeyMsg:
-		switch msg.String() {
-		// case "r":
-		// 	return v, v.revertLine
-		// case "R":
-		// 	return v, v.revertHunk
-		}
-	case error:
-		logging.Error(`update.error`, `err`, msg)
-		v.err = msg
-	}
-
-	return v, nil
 }
 
-var errMessageStyle = lipgloss.NewStyle().Foreground(lipgloss.Color(`#777777`))
-
 func (v view) View() string {
-	if v.err != nil {
-		return fmt.Sprintf("%s\n\n%s\n\n%s",
-			"An error occurred:",
-			errMessageStyle.Render(v.err.Error()),
-			"Press enter to continue",
-		)
-	}
-
 	return v.currentModel.View()
 }
