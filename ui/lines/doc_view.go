@@ -37,6 +37,10 @@ type UI struct {
 type Config struct {
 	HandleLineKey string
 	HandleHunkKey string
+
+	CanReset     bool
+	ResetLineKey string
+	ResetHunkKey string
 }
 
 func New(dt DocType, dg docGetter, keyCfg Config, windowSize int) *UI {
@@ -76,6 +80,14 @@ func (u *UI) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return u, u.handleLine
 		case u.keyCfg.HandleHunkKey:
 			return u, u.handleHunk
+		case u.keyCfg.ResetLineKey:
+			if u.keyCfg.CanReset {
+				return u, u.handleResetLine
+			}
+		case u.keyCfg.ResetHunkKey:
+			if u.keyCfg.CanReset {
+				return u, u.handleResetHunk
+			}
 		}
 	case RefreshMsg:
 		return u, u.UpdateDoc
@@ -280,4 +292,18 @@ func (u *UI) handleHunk() tea.Msg {
 		msg.Direction = patch.Unstage
 	}
 	return msg
+}
+
+func (u *UI) handleResetLine() tea.Msg {
+	return ResetMsg{
+		Doc:   u.doc,
+		Lines: []int{u.currentLine()},
+	}
+}
+
+func (u *UI) handleResetHunk() tea.Msg {
+	return ResetMsg{
+		Doc:   u.doc,
+		Lines: u.linesInCurrentHunk(),
+	}
 }

@@ -13,3 +13,8 @@ type PatchMsg struct {
 	Doc       patch.Document
 	Lines     []int
 }
+
+type ResetMsg struct {
+	Doc   patch.Document
+	Lines []int
+}
