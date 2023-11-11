@@ -8,11 +8,12 @@ import (
 	"os/exec"
 	"strings"
 
+	"github.com/cszczepaniak/go-istage/nolibgit"
 	git "github.com/libgit2/git2go/v34"
 )
 
 type GitExecBuilder struct {
-	env  Environment
+	env  nolibgit.Environment
 	repo *git.Repository
 
 	stdin      io.Reader
@@ -23,8 +24,27 @@ type GitExecBuilder struct {
 
 func (gs *Client) Exec(name string) *GitExecBuilder {
 	return &GitExecBuilder{
-		env:  gs.env,
+		env:  gs.env.toNoLibGit(gs.repo.Workdir()),
 		repo: gs.repo,
+
+		updateRepo: true,
+		capture:    true,
+		args:       []string{name},
+	}
+}
+
+func (env Environment) toNoLibGit(workDir string) nolibgit.Environment {
+	return nolibgit.Environment{
+		RepoDir:       env.repoPath,
+		WorkingDir:    workDir,
+		GitExecutable: env.pathToGit,
+	}
+}
+
+func Exec(env nolibgit.Environment, repo *git.Repository, name string) *GitExecBuilder {
+	return &GitExecBuilder{
+		env:  env,
+		repo: repo,
 
 		updateRepo: true,
 		capture:    true,
@@ -34,7 +54,7 @@ func (gs *Client) Exec(name string) *GitExecBuilder {
 
 func (e Environment) Exec(repo *git.Repository, name string) *GitExecBuilder {
 	return &GitExecBuilder{
-		env:  e,
+		env:  e.toNoLibGit(repo.Workdir()),
 		repo: repo,
 
 		updateRepo: true,
@@ -64,9 +84,8 @@ func (eb *GitExecBuilder) WithArgs(a ...string) *GitExecBuilder {
 }
 
 func (eb *GitExecBuilder) Run() error {
-	cmd := exec.Command(eb.env.pathToGit, eb.args...)
-
-	cmd.Dir = eb.repo.Workdir()
+	cmd := exec.Command(eb.env.GitExecutable, eb.args...)
+	cmd.Dir = eb.env.WorkingDir
 
 	var out strings.Builder
 	if eb.capture {
@@ -94,7 +113,7 @@ func (eb *GitExecBuilder) Run() error {
 	}
 
 	if eb.updateRepo {
-		repo, err := git.OpenRepository(eb.env.repoPath)
+		repo, err := git.OpenRepository(eb.env.RepoDir)
 		if err != nil {
 			return err
 		}

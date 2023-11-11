@@ -9,6 +9,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/cszczepaniak/go-istage/nolibgit"
 	git "github.com/libgit2/git2go/v34"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -16,7 +17,7 @@ import (
 
 type testRepo struct {
 	t    testing.TB
-	env  Environment
+	env  nolibgit.Environment
 	repo *git.Repository
 	path string
 }
@@ -46,10 +47,10 @@ func NewTestRepo(t testing.TB) testRepo {
 	out, err = exec.Command(`git`, `commit`, `--allow-empty`, `-m`, `initial commit`).CombinedOutput()
 	require.NoError(t, err, "failed to make initial git commit:\n %s\n", out)
 
-	env, err := NewEnvironment(``, ``)
+	env, err := nolibgit.LoadEnvironment()
 	require.NoError(t, err, `failed to init git environment`)
 
-	repo, err := git.OpenRepository(env.repoPath)
+	repo, err := git.OpenRepository(env.RepoDir)
 	require.NoError(t, err, `failed to open git repository`)
 
 	return testRepo{
@@ -61,7 +62,7 @@ func NewTestRepo(t testing.TB) testRepo {
 }
 
 func (tr testRepo) Add(path string) {
-	err := tr.env.Exec(tr.repo, `add`).WithArgs(path).Run()
+	err := Exec(tr.env, tr.repo, `add`).WithArgs(path).Run()
 	require.NoError(tr.t, err)
 }
 
@@ -70,12 +71,12 @@ func (tr testRepo) AddAll() {
 }
 
 func (tr testRepo) ClearUnstagedChanges() {
-	err := tr.env.Exec(tr.repo, `checkout`).WithArgs(`.`).Run()
+	err := Exec(tr.env, tr.repo, `checkout`).WithArgs(`.`).Run()
 	require.NoError(tr.t, err)
 }
 
 func (tr testRepo) Commit(msg string) {
-	err := tr.env.Exec(tr.repo, `commit`).WithArgs(`-m`, msg).Run()
+	err := Exec(tr.env, tr.repo, `commit`).WithArgs(`-m`, msg).Run()
 	require.NoError(tr.t, err)
 }
 

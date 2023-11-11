@@ -3,10 +3,11 @@ package git
 import (
 	"errors"
 	"os"
+	"path"
 	"path/filepath"
 	"strings"
 
-	git "github.com/libgit2/git2go/v34"
+	"github.com/cszczepaniak/go-istage/nolibgit"
 )
 
 type Environment struct {
@@ -33,6 +34,13 @@ func NewEnvironment(repoPath string, pathToGit string) (Environment, error) {
 		repoPath:  repoPath,
 		pathToGit: pathToGit,
 	}, nil
+}
+
+func newEnvironmentFromNoLibGit(env nolibgit.Environment) Environment {
+	return Environment{
+		repoPath:  env.RepoDir,
+		pathToGit: env.GitExecutable,
+	}
 }
 
 func resolveGitPath() (string, error) {
@@ -67,5 +75,19 @@ func resolveRepoPath() (string, error) {
 	if err != nil {
 		return ``, err
 	}
-	return git.Discover(d, false, nil)
+
+	return resolveRepoPathFrom(d)
+}
+
+func resolveRepoPathFrom(start string) (string, error) {
+	entries, err := os.ReadDir(start)
+	if err != nil {
+		return ``, err
+	}
+	for _, e := range entries {
+		if e.IsDir() && strings.HasSuffix(e.Name(), `.git`) {
+			return e.Name(), nil
+		}
+	}
+	return resolveRepoPathFrom(path.Join(`..`, start))
 }

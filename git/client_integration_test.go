@@ -15,7 +15,7 @@ func TestUnstagedFiles(t *testing.T) {
 	f3 := r.MakeFile(t, `c.txt`).AddLine(`ghi`).ShouldCommit(`abc`).Build()
 	f4 := r.MakeFile(t, `old.txt`).AddLine(`old text`).ShouldCommit(`abc`).Build()
 
-	gc, err := NewClient(r.env)
+	gc, err := NewClient(newEnvironmentFromNoLibGit(r.env))
 	require.NoError(t, err)
 
 	f2.Append("ghi\n")
@@ -52,7 +52,7 @@ func TestStagedFiles(t *testing.T) {
 
 	f1 := r.MakeFile(t, `a.txt`).AddLine(`abc`).ShouldStage().Build()
 
-	gc, err := NewClient(r.env)
+	gc, err := NewClient(newEnvironmentFromNoLibGit(r.env))
 	require.NoError(t, err)
 
 	f2.Append("ghi\n")
@@ -87,7 +87,7 @@ func TestUnstagedChanges(t *testing.T) {
 
 	f := r.MakeFile(t, `a.txt`).AddLine(`abc`).Build()
 
-	gc, err := NewClient(r.env)
+	gc, err := NewClient(newEnvironmentFromNoLibGit(r.env))
 	require.NoError(t, err)
 
 	c, err := gc.UnstagedChanges()
@@ -163,7 +163,7 @@ func TestStagedChanges(t *testing.T) {
 	f := r.MakeFile(t, `b.txt`).AddLine(`def`).ShouldStage().Build()
 	_ = f
 
-	gc, err := NewClient(r.env)
+	gc, err := NewClient(newEnvironmentFromNoLibGit(r.env))
 	require.NoError(t, err)
 
 	c, err := gc.StagedChanges()
