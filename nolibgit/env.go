@@ -37,6 +37,26 @@ type repoPath struct {
 	workDir string
 }
 
+func (p repoPath) ensureAbs() (repoPath, error) {
+	if !filepath.IsAbs(p.dir) {
+		a, err := filepath.Abs(p.dir)
+		if err != nil {
+			return repoPath{}, err
+		}
+		p.dir = a
+	}
+
+	if !filepath.IsAbs(p.workDir) {
+		a, err := filepath.Abs(p.workDir)
+		if err != nil {
+			return repoPath{}, err
+		}
+		p.workDir = a
+	}
+
+	return p, nil
+}
+
 func resolveRepoPath() (repoPath, error) {
 	d, err := os.Getwd()
 	if err != nil {
@@ -56,7 +76,7 @@ func resolveRepoPathFrom(start string) (repoPath, error) {
 			return repoPath{
 				dir:     start,
 				workDir: e.Name(),
-			}, nil
+			}.ensureAbs()
 		}
 	}
 	return resolveRepoPathFrom(path.Join(`..`, start))
