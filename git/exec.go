@@ -8,11 +8,12 @@ import (
 	"os/exec"
 	"strings"
 
+	"github.com/cszczepaniak/go-istage/nolibgit"
 	git "github.com/libgit2/git2go/v34"
 )
 
 type GitExecBuilder struct {
-	env  Environment
+	env  nolibgit.Environment
 	repo *git.Repository
 
 	stdin      io.Reader
@@ -32,9 +33,9 @@ func (gs *Client) Exec(name string) *GitExecBuilder {
 	}
 }
 
-func (e Environment) Exec(repo *git.Repository, name string) *GitExecBuilder {
+func Exec(env nolibgit.Environment, repo *git.Repository, name string) *GitExecBuilder {
 	return &GitExecBuilder{
-		env:  e,
+		env:  env,
 		repo: repo,
 
 		updateRepo: true,
@@ -64,9 +65,8 @@ func (eb *GitExecBuilder) WithArgs(a ...string) *GitExecBuilder {
 }
 
 func (eb *GitExecBuilder) Run() error {
-	cmd := exec.Command(eb.env.pathToGit, eb.args...)
-
-	cmd.Dir = eb.repo.Workdir()
+	cmd := exec.Command(eb.env.GitExecutable, eb.args...)
+	cmd.Dir = eb.env.WorkingDir
 
 	var out strings.Builder
 	if eb.capture {
@@ -94,7 +94,7 @@ func (eb *GitExecBuilder) Run() error {
 	}
 
 	if eb.updateRepo {
-		repo, err := git.OpenRepository(eb.env.repoPath)
+		repo, err := git.OpenRepository(eb.env.RepoDir)
 		if err != nil {
 			return err
 		}

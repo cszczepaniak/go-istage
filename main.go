@@ -7,6 +7,7 @@ import (
 
 	"github.com/cszczepaniak/go-istage/git"
 	"github.com/cszczepaniak/go-istage/logging"
+	"github.com/cszczepaniak/go-istage/nolibgit"
 	"github.com/cszczepaniak/go-istage/services"
 	"github.com/cszczepaniak/go-istage/ui"
 )
@@ -57,7 +58,7 @@ func main() {
 		panic(`failed to initialize logging: ` + err.Error())
 	}
 
-	gitEnv, err := git.NewEnvironment(``, ``)
+	gitEnv, err := nolibgit.LoadEnvironment()
 	if err != nil {
 		logging.Error(`failed to initialize git env`, `err`, err)
 	}

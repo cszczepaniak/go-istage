@@ -4,6 +4,7 @@ import (
 	"path"
 	"testing"
 
+	"github.com/cszczepaniak/go-istage/nolibgit"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -11,17 +12,16 @@ import (
 func TestResolveGitPath(t *testing.T) {
 	NewTestRepo(t)
 
-	p, err := resolveGitPath()
+	env, err := nolibgit.LoadEnvironment()
 	require.NoError(t, err)
-	assert.NotEmpty(t, p)
-	assert.Contains(t, p, `git`)
+	assert.Contains(t, env.GitExecutable, `git`)
 }
 
 func TestResolveRepoPath(t *testing.T) {
 	r := NewTestRepo(t)
 
-	p, err := resolveRepoPath()
+	env, err := nolibgit.LoadEnvironment()
 	require.NoError(t, err)
-	assert.NotEmpty(t, p)
-	assert.Equal(t, path.Join(r.path, `.git`), path.Join(p))
+
+	assert.Equal(t, path.Join(r.path, `.git`), path.Join(env.RepoDir))
 }
