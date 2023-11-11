@@ -4,16 +4,17 @@ import (
 	"path"
 	"strings"
 
+	"github.com/cszczepaniak/go-istage/nolibgit"
 	"github.com/cszczepaniak/go-istage/patch"
 	git "github.com/libgit2/git2go/v34"
 )
 
 type Client struct {
 	repo *git.Repository
-	env  Environment
+	env  nolibgit.Environment
 }
 
-func NewClient(env Environment) (*Client, error) {
+func NewClient(env nolibgit.Environment) (*Client, error) {
 	c := &Client{
 		env: env,
 	}
@@ -25,7 +26,7 @@ func NewClient(env Environment) (*Client, error) {
 }
 
 func (c *Client) UpdateRepository() error {
-	repo, err := git.OpenRepository(c.env.repoPath)
+	repo, err := git.OpenRepository(c.env.RepoDir)
 	if err != nil {
 		return err
 	}

@@ -24,7 +24,7 @@ type GitExecBuilder struct {
 
 func (gs *Client) Exec(name string) *GitExecBuilder {
 	return &GitExecBuilder{
-		env:  gs.env.toNoLibGit(gs.repo.Workdir()),
+		env:  gs.env,
 		repo: gs.repo,
 
 		updateRepo: true,
@@ -33,28 +33,9 @@ func (gs *Client) Exec(name string) *GitExecBuilder {
 	}
 }
 
-func (env Environment) toNoLibGit(workDir string) nolibgit.Environment {
-	return nolibgit.Environment{
-		RepoDir:       env.repoPath,
-		WorkingDir:    workDir,
-		GitExecutable: env.pathToGit,
-	}
-}
-
 func Exec(env nolibgit.Environment, repo *git.Repository, name string) *GitExecBuilder {
 	return &GitExecBuilder{
 		env:  env,
-		repo: repo,
-
-		updateRepo: true,
-		capture:    true,
-		args:       []string{name},
-	}
-}
-
-func (e Environment) Exec(repo *git.Repository, name string) *GitExecBuilder {
-	return &GitExecBuilder{
-		env:  e.toNoLibGit(repo.Workdir()),
 		repo: repo,
 
 		updateRepo: true,
