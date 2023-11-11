@@ -13,7 +13,16 @@ jobs:
         with:
           go-version: '1.20'
       - run: go mod download
+
+      - name: Cache libgit2 Build
+        id: cache-libgit2
+        uses: actions/cache@v3
+        with:
+          path: /home/runner/go/pkg/mod/github.com/libgit2/git2go/v34@v34.0.0/vendor
+          key: libgit2-cache
+
       - name: Install libgit2 statically 
+        if: steps.cache-libgit2.outputs.cache-hit != 'true'
         run: |
           pushd /home/runner/go/pkg/mod/github.com/libgit2/git2go/v34@v34.0.0
           chmod +x ./script/build-libgit2-static.sh
