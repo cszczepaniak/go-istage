@@ -86,7 +86,11 @@ func resolveRepoPathFrom(start string) (string, error) {
 	}
 	for _, e := range entries {
 		if e.IsDir() && strings.HasSuffix(e.Name(), `.git`) {
-			return e.Name(), nil
+			path, err := filepath.Abs(filepath.Join(start, e.Name()))
+			if err != nil {
+				return ``, err
+			}
+			return path, nil
 		}
 	}
 	return resolveRepoPathFrom(path.Join(`..`, start))
