@@ -74,8 +74,8 @@ func resolveRepoPathFrom(start string) (repoPath, error) {
 	for _, e := range entries {
 		if e.IsDir() && strings.HasSuffix(e.Name(), `.git`) {
 			return repoPath{
-				dir:     start,
-				workDir: e.Name(),
+				dir:     e.Name(),
+				workDir: start,
 			}.ensureAbs()
 		}
 	}
